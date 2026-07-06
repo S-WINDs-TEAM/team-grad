@@ -53,7 +53,10 @@ const userSchema = new mongoose.Schema({
 userSchema.pre('save', async function() {
     if (!this.isModified('password')) return; 
     this.password = await bcrypt.hash(this.password, 12);
+    // if (this.isModified('password')) return this.password = await bcrypt.hash(this.password, 12); same logic but reverse
 });
+
+
 
 // compaire method
 userSchema.methods.comparePassword = async function (candidatePassword) {
@@ -62,3 +65,18 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
+
+
+
+
+// pre('save') = "نفذ الكود ده قبل ما تحفظ المستخدم في الداتابيز".
+
+// function() = لازم تكون دالة عادية (مش Arrow Function) عشان نحافظ على قيمة this (اللي هي المستخدم الحالي
+// 8️⃣ مساحة التطور
+
+// لو عايز تضيف "تسجيل دخول بجوجل"، هتضيف حقل googleId: String هنا، وتخلي password اختياري (required: false). ده تطوير سهل جداً.
+// لو عايز تضيف تحقق بخطوتين (2FA): هتضيف حقل twoFactorSecret: String و isTwoFactorEnabled: Boolean.
+
+// لو عايز تحسن أداء البحث: تقدر تضيف index على حقل email عشان البحث عنه يكون أسرع (مكتوب أوتوماتيك بسبب unique: true).
+
+// لو عايز تضيف Soft Delete: بدل ما تحذف المستخدم نهائياً، تضيف حقل isDeleted: { type: Boolean, default: false } وتعدل الـ Queries عشان تجيب بس اللي isDeleted: false.

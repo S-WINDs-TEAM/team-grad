@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import toast from 'react-hot-toast';
+
 
 const LoginPage = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
@@ -10,16 +12,19 @@ const LoginPage = () => {
   const onSubmit = async (data) => {
     try {
       await login(data);
+      toast.success('welcome back!'); //msg for user
       navigate('/');
     } catch (err) {
-      alert(err.response?.data?.msg || 'Login failed');
+      // alert(err.response?.data?.msg || 'Login failed');
+      toast.error(err.response?.data?.msg || 'Login failed'); // msg insted of alart
+
     }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.logo}>WIND 🌬️</h1>
+        <h1 style={styles.logo}>S-WINDs 🌬️</h1>
         <p style={styles.subtitle}>Smart Weather Navigation</p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>

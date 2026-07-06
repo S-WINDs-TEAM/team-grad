@@ -16,9 +16,11 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hook-form": "^7.79.0",
+    "react-hot-toast": "^2.6.0",
     "react-leaflet": "^5.0.0",
     "react-redux": "^9.3.0",
-    "react-router-dom": "^7.17.0"
+    "react-router-dom": "^7.17.0",
+    "redux-persist": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

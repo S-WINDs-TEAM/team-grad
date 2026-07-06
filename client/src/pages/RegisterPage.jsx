@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../store/authSlice';
+import toast from 'react-hot-toast';
 
 const RegisterPage = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
@@ -13,16 +14,18 @@ const RegisterPage = () => {
     try {
       const response = await axiosInstance.post('/auth/register', data);
       dispatch(setUser(response.data.user));
+      toast.success('acc created, welcome aboard');
       navigate('/plan');
     } catch (err) {
-      alert(err.response?.data?.msg || 'Registration failed');
+      // alert(err.response?.data?.msg || 'Registration failed');
+      toast.error(err.response?.data?.msg || 'Registration failed'); // user msg insted of alart
     }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.logo}>WIND 🌬️</h1>
+        <h1 style={styles.logo}>S-WINDs 🌬️</h1>
         <p style={styles.subtitle}>Create your account</p>
 
         <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>

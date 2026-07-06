@@ -3,11 +3,14 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import PlanTripPage from './pages/PlanTripPage';
-import RouteResultsPage from './pages/RouteResultsPage';
+// import RouteResultsPage from './pages/RouteResultsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import {Toaster} from 'react-hot-toast';
 
 function App() {
   return (
+  <>
+  <Toaster position="top-right" toastOptions={{duration: 4000}}/>
     <Routes>
       //login
       <Route path="/login" element={<LoginPage />} />
@@ -20,7 +23,7 @@ function App() {
         <ProtectedRoute>
           <HomePage/>
         </ProtectedRoute>}/>
-        /plan
+        /plan and results
       <Route
         path="/plan"
         element={
@@ -28,13 +31,14 @@ function App() {
             <PlanTripPage />
           </ProtectedRoute>}/>
           //result
-      <Route path='/results' 
+      {/* <Route path='/results' 
       element={<ProtectedRoute>
          <RouteResultsPage/> 
-         </ProtectedRoute>}/>
+         </ProtectedRoute>}/> */}
          //main
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+        </>
   );
 }
 

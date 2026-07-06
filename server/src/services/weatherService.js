@@ -36,6 +36,7 @@ const fetchWeatherFromOpenMeteo = async (lat, lng, targetTime) => {
     const targetHour = targetTime.toISOString().substring(0, 13) + ":00";
      //  "2026-06-21  fromat T15:00
     let index = hourly.time.findIndex(t => t === targetHour);
+    if(!hourly || !hourly.time || hourly.time.length ===0) throw new Error('no weather data returned from open-mateo');
     if (index === -1) {
     console.warn(`no exact match for ${targetHour}, falling back to index 0`);
         index = 0; // first value for just check

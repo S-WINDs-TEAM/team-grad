@@ -1,20 +1,23 @@
 //the server operator file
 //
+console.log("server flow start")
 
 require('dotenv').config();
+console.log("server end calling .env")
 
 const app = require('./app'); 
-const dpconnect = require('./config/db');
+const dpConnection = require('./config/db');
 
 const PORT = process.env.PORT || 6000;
 
 const startServer = async ()=>{
-    await dpconnect(); // we make the server wait the db to start first if not then shut the server down no need to it to be runed
+    await dpConnection(); // we make the server wait the db to start first if not then shut the server down no need to it to be runed
     app.listen (PORT, ()=>{ // if db worked well then listen
         console.log(`server is running on port: ${PORT}`); // if all done well then output this msg
     });
 }
 
+console.log("server end by calling itselfe()")
 startServer();
 
 

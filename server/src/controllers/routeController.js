@@ -67,14 +67,26 @@ const planRoute = async (req, res, next) => {
             await delay(500); // wait 1/2 sec
 
             const weather = await getWeatherForLocationAndTime(wp.lat, wp.lng, etaForThisPoint);
-            const maxSafeSpeed = calculatemaxSafeSpeed(weather, vType);
-            const riskLevel = calculateRiskLevel(weather, vType);
+            // const maxSafeSpeed = calculatemaxSafeSpeed(weather, vType);
+            // const riskLevel = calculateRiskLevel(weather, vType);
+
+            //calc all types speed and risks for caching
+            const vehicleTypes = ['car', 'motorcycle', 'truck'];
+            const speeds = {};
+            const risks= {};
+            vehicleTypes.forEach(type => {
+                speeds[type]= calculatemaxSafeSpeed(weather, type);
+                risks[type] = calculateRiskLevel(weather, type);
+            });
+            //push
             waypointsWithWeather.push({
                 location: {lat: wp.lat, lng: wp.lng},
                 eta: etaForThisPoint,
                 distanceFromStart: wp.distanceFromStart,
-                weather: {...weather, riskLevel},
-                maxSafeSpeed,
+                weather: {...weather, riskLevel: risks[vType]},
+                maxSafeSpeed: speeds[vType],
+                speeds: speeds,
+                risks: risks,
             });
             
             cumulativeEta = etaForThisPoint;

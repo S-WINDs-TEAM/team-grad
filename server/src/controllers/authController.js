@@ -76,7 +76,7 @@ const register = async (req, res)=>{
         // user.refreshToken = refreshToken;
         //more security date save
         // const {userAgent, ip} = getSecurityData(req);
-        const {cleanFingerprint, ip} = getSecurityData(req);
+        const {cleanFingerprint, ip, countryCode} = getSecurityData(req);
 
         //create the refreshtoken for the regisered user
         user.refreshToken = {
@@ -86,6 +86,7 @@ const register = async (req, res)=>{
             // deviceFingerprint: userAgent,
             deviceFingerprint: cleanFingerprint,
             lastIP: ip,
+            countryCode: countryCode,
         }
 
         await user.save();
@@ -112,6 +113,7 @@ const register = async (req, res)=>{
 //login endpoint 
 const login = async (req, res)=>{
     try{
+        console.log(req.body);
         const {email, password} =req.body;
         const user = await User.findOne({email});
         if (!user) return res.status(401).json({msg: 'invalid credntials'});
@@ -124,7 +126,7 @@ const login = async (req, res)=>{
 
         //save refreshtoken in the db so we can checked it out any time we want
         // user.refreshToken = refreshToken;
-        const {cleanFingerprint, ip} = getSecurityData(req);
+        const {cleanFingerprint, ip, countryCode} = getSecurityData(req);
 
         user.refreshToken = {
             token: refreshToken,
@@ -132,6 +134,7 @@ const login = async (req, res)=>{
             expiresAt: new Date(Date.now() + 7*24*60*60*1000),
             deviceFingerprint: cleanFingerprint,
             lastIP: ip,
+            countryCode: countryCode,
         }
         await user.save();
         

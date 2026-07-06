@@ -46,3 +46,26 @@ const sampleWaypoints = (coordinates, totalDistanceKm) => {
 }
 
 module.exports = {getRoute, sampleWaypoints};
+
+
+
+
+
+
+
+
+
+
+
+
+// والـ Voice Assistant المستقبلي؟
+// هنا بقى الجواب اللي هتلمع بيه: لما تجي تشتغل على الـ Voice Assistant، مش هتغير حاجة في الطلب بتاع OSRM. هتخلي steps: false زي ماهو، وهتستخدم مكتبة تانية لتحويل المسار لتعليمات.
+
+// ✅ الخطة الذكية:
+// خلي steps: false في طلب OSRM عشان تحافظ على سرعة الأداء.
+
+// استخدم مكتبة زي osrm-text-instructions عشان تحول الـ geometry (الإحداثيات) لتعليمات مفهومة صوتيًا.
+
+// المكتبة دي بتاخد الـ Route من OSRM (حتى من غير steps) وبتحوله لـ "انعطف يمين"، "استمر straight"، إلخ.
+
+// كده بتفصل بين حساب المسار (OSRM) و توليد التعليمات (مكتبة تانية)، وده تصميم أنضف وأسهل في الصيانة.
