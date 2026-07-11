@@ -15,7 +15,7 @@ const RegisterPage = () => {
       const response = await axiosInstance.post('/auth/register', data);
       dispatch(setUser(response.data.user));
       toast.success('acc created, welcome aboard');
-      navigate('/plan');
+      navigate('/home');
     } catch (err) {
       // alert(err.response?.data?.msg || 'Registration failed');
       toast.error(err.response?.data?.msg || 'Registration failed'); // user msg insted of alart

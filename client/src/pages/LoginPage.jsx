@@ -13,7 +13,7 @@ const LoginPage = () => {
     try {
       await login(data);
       toast.success('welcome back!'); //msg for user
-      navigate('/');
+      navigate('/home');
     } catch (err) {
       // alert(err.response?.data?.msg || 'Login failed');
       toast.error(err.response?.data?.msg || 'Login failed'); // msg insted of alart

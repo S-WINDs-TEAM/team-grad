@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import PlanTripPage from './pages/PlanTripPage';
+import LandingPage from './pages/LandingPage';
 // import RouteResultsPage from './pages/RouteResultsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import {Toaster} from 'react-hot-toast';
@@ -16,9 +17,10 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       //register
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/landing" element={<LandingPage />} />
       //home
       <Route 
-      path='/'
+      path='/home'
       element = {
         <ProtectedRoute>
           <HomePage/>
@@ -36,7 +38,7 @@ function App() {
          <RouteResultsPage/> 
          </ProtectedRoute>}/> */}
          //main
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/landing" />} />
     </Routes>
         </>
   );

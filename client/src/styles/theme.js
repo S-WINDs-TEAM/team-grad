@@ -6,10 +6,10 @@ export const theme = {
   bgGlass: 'rgba(255,255,255,0.05)', // glassmorphism
 
   // Brand Colors
-  accentBlue: '#2563EB',     //   ( blut insted of nion)
+  accentBlue: '#2563EB',     //   ( blue insted of nion)
   accentBlueDark: '#1D4ED8',
   accentBlueLight: '#3B82F6',
-  accentGreen: '#10B981',    // للـ fleet manager / safe
+  accentGreen: '#10B981',    //  fleet manager / safe
   accentOrange: '#F59E0B',   // caution
   accentRed: '#EF4444',      // danger / high risk
 
