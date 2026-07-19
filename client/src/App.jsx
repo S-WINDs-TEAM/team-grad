@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import Register from './pages/Register';
 import HomePage from './pages/HomePage';
 import PlanTripPage from './pages/PlanTripPage';
 import LandingPage from './pages/LandingPage';
@@ -16,7 +16,7 @@ function App() {
       //login
       <Route path="/login" element={<LoginPage />} />
       //register
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/landing" element={<LandingPage />} />
       //home
       <Route 
