@@ -1,0 +1,2 @@
+import { CloudRain, MapPin } from 'lucide-react'
+export default function WeatherWidget(){return <aside className="floating weather"><div className="weather-top"><CloudRain/><span className="temp">12°c</span></div><small>Light Rain</small><small className="city"><MapPin size={13} style={{verticalAlign:'-2px'}}/> San Francisco, CA</small><div className="stats"><span>Wind<strong>18 km/h</strong></span><span>Humidity<strong>87%</strong></span><span>Visibility<strong>6 km</strong></span></div></aside>}

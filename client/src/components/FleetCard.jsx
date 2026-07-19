@@ -1,0 +1,4 @@
+import { BarChart3, ShieldCheck, UsersRound, Monitor, Wrench } from 'lucide-react'
+import { motion } from 'framer-motion'
+const features = [[Monitor,'Live fleet tracking'],[BarChart3,'Operational insights & reports'],[ShieldCheck,'Driver safety & compliance'],[Wrench,'Alerts & maintenance reminders']]
+export default function FleetCard(){return <motion.article className="glass-card fleet" whileHover={{y:-3}}><div className="circle-icon"><UsersRound/></div><h2>Fleet Manager</h2><div className="underline"/><p className="card-description">Monitor your fleet in real time, optimize operations,<br/>and keep every driver and vehicle safe.</p><ul className="feature-list">{features.map(([Icon,text])=><li key={text}><Icon/>{text}</li>)}</ul><button className="card-cta">I'm a Fleet Manager <span className="arrow">→</span></button></motion.article>}

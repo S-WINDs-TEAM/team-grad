@@ -1,0 +1,4 @@
+import { CloudRain, Navigation, ShieldCheck, TriangleAlert, UserRound } from 'lucide-react'
+import { motion } from 'framer-motion'
+const features = [[CloudRain,'Real-time weather updates'],[Navigation,'Smart route recommendations'],[TriangleAlert,'Hazard & traffic alerts'],[ShieldCheck,'Safer, stress-free journeys']]
+export default function DriverCard(){return <motion.article className="glass-card" whileHover={{y:-3}}><div className="circle-icon"><UserRound/></div><h2>Individual Driver</h2><div className="underline"/><p className="card-description">Get personalized weather alerts, smarter routes,<br/>and real-time road conditions for your daily drive.</p><ul className="feature-list">{features.map(([Icon,text])=><li key={text}><Icon/>{text}</li>)}</ul><button className="card-cta">I'm an Individual Driver <span className="arrow">→</span></button></motion.article>}

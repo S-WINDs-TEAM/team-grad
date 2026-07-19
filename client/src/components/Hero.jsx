@@ -1,0 +1,1 @@
+export default function Hero() { return <section className="hero"><h1>Navigate Smarter. <span>Arrive Safer.</span></h1><p>Real-time weather intelligence and smart routing<br/>for every journey and every fleet.</p></section> }
