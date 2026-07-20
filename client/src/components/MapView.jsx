@@ -64,10 +64,11 @@ const endIcon = L.divIcon({
   popupAnchor: [0, -44],
 });
 
-// Waypoint icon – small dot, with optional pulse for danger
-const getWaypointIcon = (riskLevel, isDanger = false) => {
+// Waypoint icon with number inside a dot
+const getWaypointIcon = (riskLevel, index, isDanger = false) => {
   const color = isDanger ? '#ef4444' : getRiskColor(riskLevel);
-  const size = isDanger ? 16 : 12;
+  const size = isDanger ? 20 : 16;
+  const fontSize = isDanger ? 10 : 8;
   const pulse = isDanger ? `
     animation: pulse-danger 1.5s ease-in-out infinite;
     @keyframes pulse-danger {
@@ -86,8 +87,17 @@ const getWaypointIcon = (riskLevel, isDanger = false) => {
         border-radius: 50%;
         border: 2px solid white;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: ${fontSize}px;
+        font-weight: 700;
+        font-family: 'Inter', system-ui, sans-serif;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         ${pulse}
       ">
+        ${index + 1}
       </div>
     `,
     iconSize: [size, size],
@@ -166,9 +176,15 @@ const MapView = ({
           <Polyline positions={alternateRoute.polyline} pathOptions={alternateStyle} />
         )}
 
-        {/* Start marker */}
+        {/* ============================================================
+            🔥 FIX: Start marker – only render if origin exists
+            ============================================================ */}
         {origin && (
-          <Marker position={[origin.lat, origin.lng]} icon={startIcon}>
+          <Marker
+            key={`start-${origin.lat}-${origin.lng}`}
+            position={[origin.lat, origin.lng]}
+            icon={startIcon}
+          >
             <Popup>
               <strong>🟢 Starting Point</strong>
               <br />
@@ -177,9 +193,15 @@ const MapView = ({
           </Marker>
         )}
 
-        {/* End marker */}
+        {/* ============================================================
+            🔥 FIX: End marker – only render if destination exists
+            ============================================================ */}
         {destination && (
-          <Marker position={[destination.lat, destination.lng]} icon={endIcon}>
+          <Marker
+            key={`end-${destination.lat}-${destination.lng}`}
+            position={[destination.lat, destination.lng]}
+            icon={endIcon}
+          >
             <Popup>
               <strong>🔴 Destination</strong>
               <br />
@@ -188,13 +210,21 @@ const MapView = ({
           </Marker>
         )}
 
-        {/* Waypoints (dots with color coding) */}
+        {/* ============================================================
+            🔥 FIX: Waypoints – ALWAYS render first and last as numbered dots
+            We only hide them if the corresponding pin marker exists
+            ============================================================ */}
         {displayWaypoints?.map((wp, i) => {
-          // Skip the first and last (they have dedicated markers)
-          if (i === 0 || i === displayWaypoints.length - 1) return null;
+          const isFirst = i === 0;
+          const isLast = i === displayWaypoints.length - 1;
+
+          // Hide first waypoint ONLY if origin exists (we use the pin instead)
+          if (isFirst && origin) return null;
+          // Hide last waypoint ONLY if destination exists (we use the pin instead)
+          if (isLast && destination) return null;
 
           const isDanger = wp === dangerWaypoint;
-          const icon = getWaypointIcon(wp.weather.riskLevel, isDanger);
+          const icon = getWaypointIcon(wp.weather.riskLevel, i, isDanger);
           const markerKey = `wp-${wp.distanceFromStart}-${isDetailed}-${i}`;
 
           return (
