@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const FleetVehicle = require('../models/FleetVehicle');
+const Trip = require('../models/Trip');
 const { getIO } = require('../socket/socketManager');
 
 // company_admin invites a driver by email. no password is set here —
@@ -210,4 +211,77 @@ const getDrivers = async (req, res, next) => {
     }
 };
 
-module.exports = { inviteDriver, addVehicle, getFleetStatus, getMyVehicleStatus, sendAlert, uploadVehiclePhoto, getDrivers };
+
+// get fleet dashboard endpoint 
+const getFleetDashboard = async (req, res, next)=> {
+    try {
+        const companyId = req.user.companyId;
+        const vehicles = await FleetVehicle.find({companyId})
+        .populate('driverId', 'name email')
+        .sort({updatedAt: -1});
+
+        if((vehicles.length === 0)) {
+            return res.status(200).json({
+                success: true,
+                fleet: [],
+                msg: "no vehicales found in your company",
+            });
+        }
+
+        //set start and end of the day
+        const startOfDay = new Date();
+        startOfDay.setHours(0,0,0,0);
+        const endOfDay= new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // trips of every vehical today
+        const fleetWithTrips = await Promise.all(
+            vehicles.map(async (vehicle) => {
+                // get first trip in the day or the nearst one
+                const todayTrip = await Trip.findOne({
+                    vehicleId: vehicle._id,
+                    departureTime: {$gte: startOfDay, $lte: endOfDay},
+                })
+                .sort({departureTime: 1}) // the nearest first
+                .select('-waypoints') //  
+                .lean() // trans to json format
+
+                let tripSummary = null;
+                if(todayTrip) {
+                    tripSummary = {
+                        id: todayTrip._id,
+                        origin: todayTrip.origin,
+                        destination: todayTrip.destination,
+                        departureTime: todayTrip.departureTime,
+                        totalDistanceKm: todayTrip.totalDistanceKm,
+                        totalDurationMin: todayTrip.totalDurationMin,
+                        overallRiskLevel: todayTrip.overallRiskLevel,
+                        routePolyline: todayTrip.routePolyline, // map draw    
+                        status: todayTrip.status,
+                    };
+                }
+                return {
+                        vehicle: {
+                        id: vehicle._id,
+                        plateNumber: vehicle.plateNumber,
+                        vehicleType: vehicle.vehicleType,
+                        status: vehicle.status,
+                        photoUrl: vehicle.photoUrl,
+                        lastSeen: vehicle.lastSeen,
+                        driver: vehicle.driverId, // populated من الـ populate أعلاه
+                },
+                todayTrip: tripSummary, // null if vehical have no trip today
+            };
+    })
+        );
+        res.status(200).json({
+            success: true,
+            fleet: fleetWithTrips,
+        });
+    } catch (err) {
+        console.error('Fleet Dashboard Error:', err.message);
+        next(err);
+    }
+}
+
+module.exports = { inviteDriver, addVehicle, getFleetStatus, getMyVehicleStatus, sendAlert, uploadVehiclePhoto, getDrivers, getFleetDashboard };

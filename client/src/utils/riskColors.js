@@ -1,27 +1,19 @@
-const getRiskColor = (riskLevel)=> {
-    const colors = {
-        low : '#00e5cc',
-        medium: '#f5a623',
-        high: '#ff4d4d',
-
-    };
-    return colors[riskLevel] || '#8a93a3';
+export const getRiskColor = (riskLevel) => {
+  const colors = {
+    low: '#10B981',
+    medium: '#F59E0B',
+    high: '#EF4444',
+  };
+  return colors[riskLevel] || '#64748B';
 };
 
-const getRiskLabel = (riskLevel) => {
-    const labels = {
-        low: "safe",
-        medium: "caution",
-        high: 'hazard',
-    };
-    return labels[riskLevel] || 'unknown';
+export const getRiskLabel = (riskLevel) => {
+  const labels = {
+    low: '🟢 Low Risk',
+    medium: '🟡 Medium Risk',
+    high: '🔴 High Risk',
+  };
+  return labels[riskLevel] || '⚪ Unknown';
 };
-const theme = {
-    bg: '#0a0e14',
-    cardBg: '#11151c',
-    primaryAccent: '#d4ff00',
-    textSecondary: '#8a93a3',
-    border: 'rgba(212, 255, 0, 0.25)',
-}
 
-export  {getRiskColor, getRiskLabel, theme};
+export const getRiskPathColor = (riskLevel) => getRiskColor(riskLevel);

@@ -303,7 +303,6 @@ const TripPlannerPage = () => {
                                     detailedWaypoints={trip.detailedWaypoints}
                                     origin={originFromTrip}
                                     destination={destinationFromTrip}
-                                    alternateRoute={trip.alternateRoute}
                                     vehicleType={selectedVehicle}
                                 />
                             </div>

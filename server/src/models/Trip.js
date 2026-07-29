@@ -38,6 +38,11 @@ const tripSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FleetVehicle',
+      default: null, // null for individual trips or if trip doesnot linked with vehical
+    },
     origin: {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
@@ -75,7 +80,8 @@ const tripSchema = new mongoose.Schema(
 );
 
 tripSchema.index({ userId: 1, createdAt: -1 });
-
+//dashboard indx one vehicle trips in one day
+tripSchema.index({vehicleId: 1, departureTime: 1});
 const Trip = mongoose.model('Trip', tripSchema);
 module.exports = Trip;
 

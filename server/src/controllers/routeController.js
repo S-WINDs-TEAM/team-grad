@@ -11,7 +11,7 @@ const { getIO } = require('../socket/socketManager');
 
 const planRoute = async (req, res, next) => {
     try {
-        const { origin, destination, vehicleType, departureTime } = req.body;
+        const { origin, destination, vehicleType, departureTime, vehicleId } = req.body;
         const departure = departureTime ? new Date(departureTime) : new Date();
         const vType = vehicleType || 'car';
         const vehicleHeight = req.user?.vehicleHeight || 'medium';
@@ -21,8 +21,10 @@ const planRoute = async (req, res, next) => {
             await computeWaypointsForDeparture(rawWaypoints, vType, departure);
 
         // FIX: store fullWaypoints (5km) in database
+        // and store the trip with the exist vehical if exist = true
         const trip = await Trip.create({
             userId: req.user._id,
+            vehicleId: vehicleId || null,
             origin,
             destination,
             vehicleType: vType,
@@ -37,15 +39,15 @@ const planRoute = async (req, res, next) => {
 
         //check for high-risk waypoints
         const highRiskWaypoint = fullWaypoints.find(wp => wp.weather.riskLevel === 'high'); 
-         let alertId = null;
+        let alertId = null;
         let alternateRouteData = null;
 
          if (highRiskWaypoint) {
-             //  جلب vehicleId من قاعدة البيانات (لو مش موجود في req.user)
-            let vehicleId = req.user?.vehicleId || null;
-            if (!vehicleId) {
+             //   vehicleId = null if optional req.user return undefiend
+            let vehicleIdForAlert = req.user?.vehicleId || null;
+            if (!vehicleIdForAlert) {
                 const vehicle = await FleetVehicle.findOne({ driverId: req.user._id });
-                                vehicleId = vehicle?._id || null;
+                                vehicleIdForAlert = vehicle?._id || null;
             }
             // 3a. Calculate alternate route (only around the danger zone)
             const dangerWp = {
@@ -73,7 +75,7 @@ const planRoute = async (req, res, next) => {
             const timeSaved =  Math.round(currentRouteSummary.durationMin - proposedRouteSummary.durationMin);
             const distanceDiff = Math.round((proposedRouteSummary.distanceKm - currentRouteSummary.distanceKm) * 10) / 10;
             
-            //  حساب waypointIndex بدقة
+            //   waypointIndex sum with proffssional
             const waypointIndex = fullWaypoints.findIndex(
                 wp => wp.location.lat === highRiskWaypoint.location.lat &&
                       wp.location.lng === highRiskWaypoint.location.lng
@@ -82,7 +84,7 @@ const planRoute = async (req, res, next) => {
             // 3c. Create an alert for the driver and manager
             const alert = await Alert.create({
                 companyId: req.user.companyId || null, // if individual, companyId is null
-                vehicleId,
+                vehicleId: vehicleIdForAlert,
                 driverId: req.user._id,
                 category: 'communication',
                 type: 'route_change_request',
@@ -130,12 +132,7 @@ const planRoute = async (req, res, next) => {
             }
         }
              // 3d. Emit the alert via WebSocket (real-time)
-        //     const io = getIO();
-        //     if (req.user.companyId) {
-        //         io.to(`company:${req.user.companyId}`).emit('fleet:alert', alert);
-        //     }
-        //     io.to(`driver:${req.user._id}`).emit('driver:alert', alert);
-        // }
+       
 
         // 4. Prepare response (include alternateRoute and alertId if any)
         const response = {
@@ -164,25 +161,7 @@ const planRoute = async (req, res, next) => {
         
         res.status(200).json(response);
 
-        // // FIX: response sends waypointsWithWeather (30km)
-        // res.status(200).json({
-        //     success: true,
-        //     trip: {
-        //         id: trip._id,
-        //         totalDistanceKm: route.distanceKm,
-        //         totalDurationMin,
-        //         overallRiskLevel: overallRisk,
-        //         waypoints: waypointsWithWeather,   // <- 8 points sent to user suammry
-        //         detailedWaypoints: fullWaypoints, //5km detailed
-        //         routePolyline,
-        //         roadMaxSpeed: route.roadMaxSpeed || 120,
-        //         urbanExitInfo: {
-        //             totalUrbanMinutes: 0,
-        //             exitTimeMinutes: 0,
-        //             totalHighwayMinutes: 0,
-        //         },
-        //     },
-        // });
+       
     } catch (err) {
         console.error("Failed URL:", err.config?.url || err.response?.config?.url);
         console.error("Status Code:", err.response?.status);

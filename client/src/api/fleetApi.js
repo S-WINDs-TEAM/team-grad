@@ -2,6 +2,7 @@ import axiosInstance from './axiosInstance';
 
 // company_admin
 const getFleetStatusApi = () => axiosInstance.get('/fleet/status');
+const getFleetDashboardApi =()=> axiosInstance.get('fleet/dashboard');
 const getDriversApi = () => axiosInstance.get('/fleet/drivers');
 const addVehicleApi = (data) => axiosInstance.post('/fleet/vehicles', data);
 const inviteDriverApi = (data) => axiosInstance.post('/fleet/drivers/invite', data);
@@ -16,6 +17,7 @@ const getMyVehicleApi = () => axiosInstance.get('/fleet/my-vehicle');
 
 export {
     getFleetStatusApi,
+    getFleetDashboardApi,
     getDriversApi,
     addVehicleApi,
     inviteDriverApi,

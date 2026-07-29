@@ -7,7 +7,9 @@ const {
     sendAlert,
     uploadVehiclePhoto,
     getDrivers,
+    getFleetDashboard,
  } = require('../controllers/fleetController');
+
 const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validateMIddleware');
 const { inviteDriverSchema, addVehicleSchema, sendAlertSchema } = require('../utils/validators');
@@ -21,6 +23,9 @@ router.get('/drivers', protect, restrictTo('company_admin'), getDrivers);
 router.post('/vehicles', protect, restrictTo('company_admin'), validate(addVehicleSchema), addVehicle);
 router.post('/vehicles/:vehicleId/photo', protect, restrictTo('company_admin'), upload.single('photo'), uploadVehiclePhoto);
 router.get('/status', protect, restrictTo('company_admin'), getFleetStatus);
+
+router.get('/dashboard', protect, restrictTo('company_admin'), getFleetDashboard);
+
 router.post('/alert', protect, restrictTo('company_admin'), validate(sendAlertSchema), sendAlert )
 // company_driver only
 router.get('/my-vehicle', protect, restrictTo('company_driver'), getMyVehicleStatus);

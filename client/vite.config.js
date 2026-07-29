@@ -12,6 +12,9 @@ export default defineConfig({
       host: 'localhost',
       port: 5173,
     },
+     headers: {
+    'Cache-Control': 'no-store',
+  },
     host: true,
     watch: {
       usePolling: true, // يحل مشاكل الملفات في بعض أنظمة Windows
