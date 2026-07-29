@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // NEW: for reading tripId from URL
 import { useDispatch, useSelector } from 'react-redux';
-import { planRouteApi, smartDepartureApi } from '../api/routeApi';
+import toast from 'react-hot-toast';
+import { planRouteApi, smartDepartureApi, getTripByIdApi } from '../api/routeApi'; // NEW: added getTripByIdApi
 import { getAdsRecommendationsApi } from '../api/adsApi';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import RouteLoadingSkeleton from '../components/routeLoadingSkeleton';
@@ -28,7 +29,7 @@ const TripPlannerPage = () => {
     const [smartDepartureLoading, setSmartDepartureLoading] = useState(false);
     const [smartDepartureSuggestions, setSmartDepartureSuggestions] = useState(null);
 
-    // Ads / Nearby Stops — auto-fetched once a route is planned
+    // Ads / Nearby Stops
     const [nearbyAds, setNearbyAds] = useState([]);
 
     const navigate = useNavigate();
@@ -36,11 +37,65 @@ const TripPlannerPage = () => {
     const { currentTrip, loading } = useSelector((state) => state.trip);
     const vehicleType = watch('vehicleType');
 
-    // لما يتغير نوع العربية، نحدث الـ selectedVehicle
+    // ================================================================
+    // NEW: Load trip from URL if ?tripId is present
+    // ================================================================
+    const [searchParams] = useSearchParams();
+    const tripId = searchParams.get('tripId');
+
+    useEffect(() => {
+        if (tripId) {
+            const loadTrip = async () => {
+                try {
+                    const response = await getTripByIdApi(tripId);
+                    const tripData = response.data.trip;
+
+                    // tripData.waypoints is the full 5km array stored in the database
+                    const fullWaypoints = tripData.waypoints || [];
+
+                    // Compute a 30‑km sample from the full waypoints
+                    let sampledWaypoints = [];
+                    if (fullWaypoints.length > 0) {
+                        const totalDistance = fullWaypoints[fullWaypoints.length - 1]?.distanceFromStart || 0;
+                        const targetCount = Math.max(2, Math.ceil(totalDistance / 30));
+                        const step = Math.max(1, Math.floor(fullWaypoints.length / targetCount));
+                        for (let i = 0; i < fullWaypoints.length; i += step) {
+                            sampledWaypoints.push(fullWaypoints[i]);
+                        }
+                        // Ensure the last point is always included
+                        const last = fullWaypoints[fullWaypoints.length - 1];
+                        if (sampledWaypoints[sampledWaypoints.length - 1] !== last) {
+                            sampledWaypoints.push(last);
+                        }
+                    }
+
+                    // Set the trip in Redux with both summary (30km) and detailed (5km) waypoints
+                    dispatch(setCurrentTrip({
+                        ...tripData,
+                        waypoints: sampledWaypoints,          // 30km summary
+                        detailedWaypoints: fullWaypoints,     // 5km full details
+                    }));
+
+                    // Fill the form fields so the user sees the route data
+                    setOrigin(tripData.origin);
+                    setDestination(tripData.destination);
+                    setSelectedVehicle(tripData.vehicleType || 'car');
+                    setValue('vehicleType', tripData.vehicleType || 'car');
+
+                } catch (err) {
+                    toast.error('Could not load trip details');
+                }
+            };
+            loadTrip();
+        }
+    }, [tripId, dispatch, setValue]);
+
+    // === handle vehicle type change ===
     useEffect(() => {
         setSelectedVehicle(vehicleType);
     }, [vehicleType]);
 
+    // === onSubmit: plan a new route ===
     const onSubmit = async () => {
         if (!origin || !destination) {
             setLocalError('Please select both departure and destination locations');
@@ -65,6 +120,7 @@ const TripPlannerPage = () => {
         }
     };
 
+    // === clear current trip ===
     const handleNewTrip = () => {
         dispatch(clearCurrentTrip());
         setOrigin(null);
@@ -72,10 +128,9 @@ const TripPlannerPage = () => {
         setShowSmartDeparture(false);
         setSmartDepartureSuggestions(null);
         setNearbyAds([]);
-        // مش بنمسح الـ vehicleType عشان المستخدم يحتفظ باختياره
     };
 
-    // Smart Departure — reuses the same origin/destination/vehicleType already used for /plan
+    // === Smart Departure ===
     const handleSmartDeparture = async () => {
         if (!origin || !destination) return;
         setShowSmartDeparture(true);
@@ -96,8 +151,7 @@ const TripPlannerPage = () => {
         }
     };
 
-    // Nearby Stops (ads) — auto-fetched around the destination once a trip is planned.
-    // condition is inferred from the last waypoint's actual weather instead of asking the user.
+    // === Nearby Stops (ads) ===
     useEffect(() => {
         if (!currentTrip || !destination) {
             setNearbyAds([]);
@@ -123,20 +177,18 @@ const TripPlannerPage = () => {
                 });
                 setNearbyAds(response.data.ads);
             } catch (err) {
-                // non-critical — the trip still works fine without nearby-stop suggestions
                 setNearbyAds([]);
             }
         };
         fetchAds();
     }, [currentTrip, destination]);
 
-    // استخراج البيانات من الـ trip الحالي
+    // === Helpers for display ===
     const trip = currentTrip;
     const originFromTrip = trip?.origin || null;
     const destinationFromTrip = trip?.destination || null;
     const tripVehicleType = trip?.vehicleType || 'car';
 
-    // دالة لحساب السرعة والمخاطر حسب النوع المختار
     const getDisplayData = (waypoint) => {
         if (!waypoint.speeds || !waypoint.risks) {
             return {
@@ -153,6 +205,9 @@ const TripPlannerPage = () => {
     const riskColor = (risk) => (risk === 'high' ? '#ff4d4d' : risk === 'medium' ? '#f5a623' : '#d4ff00');
     const adIcon = (type) => (type === 'rest' ? '🛌' : type === 'wash' ? '🚿' : '⛽');
 
+    // ================================================================
+    // Render
+    // ================================================================
     return (
         <div style={styles.page}>
             <header style={styles.header}>
@@ -166,7 +221,7 @@ const TripPlannerPage = () => {
             </header>
 
             <div style={styles.grid}>
-                {/* البانل الأيسر: الفورم */}
+                {/* Left Panel: Form */}
                 <div style={styles.panel}>
                     <h2 style={styles.panelTitle}>Route Configuration</h2>
 
@@ -284,7 +339,7 @@ const TripPlannerPage = () => {
                     )}
                 </div>
 
-                {/* البانل الأيمن: الخريطة والنتائج */}
+                {/* Right Panel: Map & Results */}
                 <div style={styles.resultsPanel}>
                     {isCalculating && (
                         <>
@@ -295,19 +350,19 @@ const TripPlannerPage = () => {
 
                     {!isCalculating && trip && (
                         <>
-                            {/* الخريطة */}
+                            {/* Map */}
                             <div style={styles.mapSection}>
                                 <MapView
                                     routePolyline={trip.routePolyline}
-                                    waypoints={trip.waypoints} 
-                                    detailedWaypoints={trip.detailedWaypoints}
+                                    waypoints={trip.waypoints}           // 30km summary
+                                    detailedWaypoints={trip.detailedWaypoints} // 5km details
                                     origin={originFromTrip}
                                     destination={destinationFromTrip}
                                     vehicleType={selectedVehicle}
                                 />
                             </div>
 
-                            {/* الملخص */}
+                            {/* Summary */}
                             <div style={styles.summaryRow}>
                                 <span style={styles.summaryItem}>📏 {trip.totalDistanceKm.toFixed(0)} km</span>
                                 <span style={styles.summaryItem}>⏱ {Math.round(trip.totalDurationMin)} min</span>
@@ -319,7 +374,7 @@ const TripPlannerPage = () => {
                                 </span>
                             </div>
 
-                            {/* الكروت القابلة للتمدد */}
+                            {/* Waypoint Cards */}
                             <div style={styles.cardsContainer}>
                                 {trip.waypoints.map((wp, i) => {
                                     const displayData = getDisplayData(wp);
@@ -331,7 +386,6 @@ const TripPlannerPage = () => {
                                             riskLevel: displayData.riskLevel,
                                         }
                                     };
-                                    // إضافة معلومات القطعة (من كيلو لكيلو)
                                     const prevDistance = i > 0 ? trip.waypoints[i-1].distanceFromStart : 0;
                                     const segmentInfo = {
                                         from: Math.round(prevDistance),
@@ -351,7 +405,7 @@ const TripPlannerPage = () => {
                                 })}
                             </div>
 
-                            {/* Nearby Stops (Ads) */}
+                            {/* Nearby Stops */}
                             {nearbyAds.length > 0 && (
                                 <div style={styles.adsSection}>
                                     <h3 style={styles.adsTitle}>📍 Nearby Stops</h3>
@@ -377,6 +431,9 @@ const TripPlannerPage = () => {
     );
 };
 
+// ================================================================
+// Styles
+// ================================================================
 const styles = {
     page: { minHeight: '100vh', background: '#0a0e14', padding: '24px', fontFamily: 'system-ui, sans-serif' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' },

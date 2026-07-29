@@ -8,6 +8,7 @@ import AcceptInvitePage from './pages/AcceptInvitePage';
 import FleetDashboardPage from './pages/FleetDashboardPage';
 import DriverTrackingPage from './pages/DriverTrackingPage';
 // import RouteResultsPage from './pages/RouteResultsPage';
+import TripHistoryPage from './pages/TripHistoryPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import {Toaster} from 'react-hot-toast';
 
@@ -44,6 +45,16 @@ function App() {
         <ProtectedRoute>
           <HomePage/>
         </ProtectedRoute>}/>
+
+        //history page 
+        <Route
+        path="/history"
+        element={
+        <ProtectedRoute>
+            <TripHistoryPage />
+        </ProtectedRoute>
+        }
+      />
         /plan and results
       <Route
         path="/plan"

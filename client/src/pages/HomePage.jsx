@@ -86,7 +86,7 @@ const HomePage = () => {
       desc: 'View your trip history',
       icon: '📍',
       path: '/history',
-      disabled: true,
+      disabled: false,
     },
     {
       title: 'Fleet Hub',
