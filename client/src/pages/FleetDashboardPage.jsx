@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import toast from 'react-hot-toast';
 import useAuth from '../hooks/useAuth';
 import useSocket from '../hooks/useSocket';
+import { interpretWeather } from '../utils/riskTranslator';
 import {
     getFleetDashboardApi,
     getDriversApi,
@@ -722,6 +723,19 @@ const FleetDashboardPage = () => {
                             const riskColor = getRiskPathColor(risk);
                             const isSelected = v._id === selectedVehicleId;
                             const trip = v.todayTrip;
+                            // Get recommendation from first waypoint if trip exists
+                            let recommendation = 'No trip planned';
+                            if (trip && trip.waypoints && trip.waypoints.length > 0) {
+                                const firstWaypoint = trip.waypoints[0];
+                                if (firstWaypoint.weather) {
+                                    const { summary } = interpretWeather(
+                                        firstWaypoint.weather,
+                                        v.vehicleType || 'car',
+                                        'medium'
+                                    );
+                                    recommendation = summary;
+                                }
+                            }
                             const routeInfo = trip ? `${trip.origin?.address || 'Start'} → ${trip.destination?.address || 'End'}` : 'No route planned';
                             return (
                                 <div
@@ -759,6 +773,11 @@ const FleetDashboardPage = () => {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div style={styles.vehiclePlate}>{v.plateNumber}</div>
+
+                                        {recommendation !== 'No trip planned' && (
+                                        <div style={styles.recommendationText}>{recommendation}</div>
+                                        )}
+
                                         <div style={styles.vehicleDriver}>{v.driverId?.name || 'No driver assigned'}</div>
                                     </div>
                                     <span style={{ ...styles.statusBadge, color: riskColor }}>
@@ -1104,6 +1123,16 @@ const styles = {
     miniBtn: {
         padding: '9px', background: theme.accentBlue, color: '#fff', border: 'none',
         borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+    },
+    recommendationText: {
+    fontSize: '10px',
+    color: '#94a3b8',
+    marginTop: '2px',
+    fontStyle: 'italic',
+    maxWidth: '150px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     },
 
     mapContainer: { position: 'relative', minHeight: '300px' },

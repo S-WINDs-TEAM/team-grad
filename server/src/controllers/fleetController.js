@@ -243,7 +243,7 @@ const getFleetDashboard = async (req, res, next)=> {
                     departureTime: {$gte: startOfDay, $lte: endOfDay},
                 })
                 .sort({departureTime: 1}) // the nearest first
-                .select('-waypoints') //  
+                .select('+waypoints +routePolyline') //  get waypoints for risktranslator
                 .lean() // trans to json format
 
                 let tripSummary = null;
@@ -257,6 +257,7 @@ const getFleetDashboard = async (req, res, next)=> {
                         totalDurationMin: todayTrip.totalDurationMin,
                         overallRiskLevel: todayTrip.overallRiskLevel,
                         routePolyline: todayTrip.routePolyline, // map draw    
+                        waypoints: todayTrip.waypoints,
                         status: todayTrip.status,
                     };
                 }

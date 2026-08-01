@@ -1,17 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // NEW: for reading tripId from URL
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { planRouteApi, smartDepartureApi, getTripByIdApi } from '../api/routeApi'; // NEW: added getTripByIdApi
+import { planRouteApi, smartDepartureApi, getTripByIdApi } from '../api/routeApi';
 import { getAdsRecommendationsApi } from '../api/adsApi';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import RouteLoadingSkeleton from '../components/routeLoadingSkeleton';
 import MapView from '../components/MapView';
 import WaypointCard from '../components/WaypointCard';
 import { setCurrentTrip, setLoading, setError, clearCurrentTrip } from '../store/tripSlice';
+import { interpretWeather } from '../utils/riskTranslator';
 
-// weather condition strings that come back from the backend (see server weatherService.js)
 const RAIN_CONDITIONS = ['rain', 'drizzle', 'heavy_rain', 'thunderstorm'];
 
 const TripPlannerPage = () => {
@@ -50,10 +51,10 @@ const TripPlannerPage = () => {
                     const response = await getTripByIdApi(tripId);
                     const tripData = response.data.trip;
 
-                    // tripData.waypoints is the full 5km array stored in the database
+                    // tripData.waypoints is the full 5km array from the database
                     const fullWaypoints = tripData.waypoints || [];
 
-                    // Compute a 30‑km sample from the full waypoints
+                    // Compute a 30km sample from the full waypoints
                     let sampledWaypoints = [];
                     if (fullWaypoints.length > 0) {
                         const totalDistance = fullWaypoints[fullWaypoints.length - 1]?.distanceFromStart || 0;

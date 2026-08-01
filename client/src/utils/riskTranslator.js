@@ -1,6 +1,4 @@
-
 // RISK TRANSLATOR – turns raw weather numbers into actionable insights
-
 
 // Helper to get vehicle‑specific wind sensitivity
 const getWindSensitivity = (vehicleType, vehicleHeight) => {
@@ -11,7 +9,7 @@ const getWindSensitivity = (vehicleType, vehicleHeight) => {
   return 1.0; // car
 };
 
-// ---- Individual parameter translators ----
+//  Individual parameter translators 
 
 const translateTemperature = (temp, vehicleType) => {
   if (temp > 40) return {
@@ -145,7 +143,7 @@ const translatePrecipitation = (precip) => {
   };
 };
 
-// ---- Main aggregator ----
+//  Main aggregator -
 export const interpretWeather = (weatherData, vehicleType = 'car', vehicleHeight = 'medium') => {
   const { temperature, humidity, windSpeed, visibility, precipitation, condition, description } = weatherData;
 
