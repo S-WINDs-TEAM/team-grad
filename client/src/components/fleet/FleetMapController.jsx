@@ -58,9 +58,9 @@ const FleetMapController = ({
         const newWaypoints = [];
         const newRouteMarkers = [];
 
-        // ================================================================
+        // 
         // 1. Draw Routes
-        // ================================================================
+        // 
         if (showRoutes) {
             mergedFleetData.forEach((item) => {
                 const trip = item.todayTrip;
@@ -133,9 +133,9 @@ const FleetMapController = ({
             });
         }
 
-        // ================================================================
+        // 
         // 2. Draw Live Markers
-        // ================================================================
+        // 
         if (showLive) {
             vehiclesWithLocation.forEach((v) => {
                 const isSelected = v._id === selectedVehicleId;
@@ -160,9 +160,9 @@ const FleetMapController = ({
             });
         }
 
-        // ================================================================
+        // 
         // 3. Draw Start/End markers for selected trip (large ones)
-        // ================================================================
+        // 
         if (selectedVehicleId) {
             const selectedItem = mergedFleetData.find(item => item._id === selectedVehicleId);
             if (selectedItem && selectedItem.todayTrip) {
@@ -191,9 +191,9 @@ const FleetMapController = ({
             }
         }
 
-        // ================================================================
+        // 
         // 4. Draw Waypoints with interpretation and highlight
-        // ================================================================
+        // 
         if (selectedTripDetails && selectedVehicleId) {
             const allWaypoints = selectedTripDetails.waypoints || [];
             if (allWaypoints.length === 0) return;
@@ -307,9 +307,9 @@ const FleetMapController = ({
             routeMarkers: newRouteMarkers,
         };
 
-        // ================================================================
+        // 
         // 5. Smart Focus - only when selection changes
-        // ================================================================
+        // 
         const selectionChanged = prevSelectedRef.current !== selectedVehicleId;
         const routesToggled = prevShowRoutesRef.current !== showRoutes;
         const liveToggled = prevShowLiveRef.current !== showLive;
