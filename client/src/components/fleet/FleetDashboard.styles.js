@@ -74,9 +74,17 @@ export const styles = {
         borderRadius: '12px',
         padding: '10px 16px',
     },
-    statIcon: { fontSize: '18px' },
-    statValue: { fontSize: '18px', fontWeight: '700' },
-    statLabel: { fontSize: '11px', color: theme.textMuted },
+    statIcon: {
+        fontSize: '18px',
+    },
+    statValue: {
+        fontSize: '18px',
+        fontWeight: '700',
+    },
+    statLabel: {
+        fontSize: '11px',
+        color: theme.textMuted,
+    },
     connectionDot: {
         marginLeft: 'auto',
         display: 'flex',
@@ -91,9 +99,6 @@ export const styles = {
         borderRadius: '50%',
     },
 
-    // ================================================================
-    // ✅ Main grid - dynamic columns set via inline style in component
-    // ================================================================
     body: {
         flex: 1,
         display: 'grid',
@@ -102,18 +107,16 @@ export const styles = {
         transition: 'grid-template-columns 0.3s ease',
     },
 
-    // ================================================================
-    // Column 1: Sidebar
-    // ================================================================
     sidebar: {
         borderRight: `1px solid ${theme.borderDefault}`,
         padding: '16px',
-        overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
         height: '100%',
+        overflow: 'hidden',
+        gap: '12px',
     },
+
     searchInput: {
         width: '100%',
         padding: '10px 12px',
@@ -126,16 +129,21 @@ export const styles = {
         boxSizing: 'border-box',
         flexShrink: 0,
     },
+
     vehicleListWrapper: {
-        flex: 1,
+        flex: '1 1 0',
         overflowY: 'auto',
         minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
     },
+
     vehicleList: {
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
     },
+
     vehicleItem: {
         display: 'flex',
         alignItems: 'center',
@@ -146,9 +154,13 @@ export const styles = {
         borderRadius: '10px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        ':hover': { background: 'rgba(255,255,255,0.05)' },
+        ':hover': {
+            background: 'rgba(255,255,255,0.05)',
+        },
     },
-    checkbox: { accentColor: theme.accentBlue },
+    checkbox: {
+        accentColor: theme.accentBlue,
+    },
     vehicleThumbWrap: {
         width: '28px',
         height: '28px',
@@ -162,12 +174,34 @@ export const styles = {
         cursor: 'pointer',
         flexShrink: 0,
     },
-    vehicleThumbImg: { width: '100%', height: '100%', objectFit: 'cover' },
-    vehicleThumbPlaceholder: { fontSize: '13px' },
-    vehiclePlate: { fontSize: '13px', fontWeight: '600', color: theme.textPrimary },
-    vehicleDriver: { fontSize: '11px', color: theme.textMuted },
-    statusBadge: { fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' },
-    emptyText: { fontSize: '12px', color: theme.textMuted, textAlign: 'center', padding: '12px' },
+    vehicleThumbImg: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+    },
+    vehicleThumbPlaceholder: {
+        fontSize: '13px',
+    },
+    vehiclePlate: {
+        fontSize: '13px',
+        fontWeight: '600',
+        color: theme.textPrimary,
+    },
+    vehicleDriver: {
+        fontSize: '11px',
+        color: theme.textMuted,
+    },
+    statusBadge: {
+        fontSize: '10px',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    emptyText: {
+        fontSize: '12px',
+        color: theme.textMuted,
+        textAlign: 'center',
+        padding: '12px',
+    },
     planRouteBtn: {
         background: 'transparent',
         border: '1px solid rgba(37, 99, 235, 0.3)',
@@ -177,18 +211,22 @@ export const styles = {
         fontSize: '14px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        ':hover': { background: 'rgba(37, 99, 235, 0.2)', borderColor: '#2563EB' },
+        ':hover': {
+            background: 'rgba(37, 99, 235, 0.2)',
+            borderColor: '#2563EB',
+        },
     },
 
     sidebarFooter: {
         flexShrink: 0,
         borderTop: `1px solid ${theme.borderDefault}`,
         paddingTop: '12px',
-        marginTop: '8px',
+        marginTop: '4px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px',
     },
+
     toggleFormsBtn: {
         padding: '10px',
         background: 'transparent',
@@ -198,9 +236,15 @@ export const styles = {
         fontSize: '12px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',
-        ':hover': { background: 'rgba(37, 99, 235, 0.1)' },
+        ':hover': {
+            background: 'rgba(37, 99, 235, 0.1)',
+        },
     },
-    formsBlock: { display: 'flex', flexDirection: 'column', gap: '12px' },
+    formsBlock: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+    },
     miniForm: {
         display: 'flex',
         flexDirection: 'column',
@@ -210,7 +254,12 @@ export const styles = {
         borderRadius: '10px',
         padding: '12px',
     },
-    miniFormTitle: { fontSize: '11px', fontWeight: '700', color: theme.textSecondary, textTransform: 'uppercase' },
+    miniFormTitle: {
+        fontSize: '11px',
+        fontWeight: '700',
+        color: theme.textSecondary,
+        textTransform: 'uppercase',
+    },
     miniInput: {
         width: '100%',
         padding: '8px 10px',
@@ -233,14 +282,12 @@ export const styles = {
         cursor: 'pointer',
     },
 
-    // ================================================================
-    // Column 3: Map
-    // ================================================================
     mapContainer: {
         position: 'relative',
         height: '100%',
         width: '100%',
         overflow: 'hidden',
+        background: '#0a0e14',
     },
     placeholder: {
         width: '100%',
@@ -253,19 +300,34 @@ export const styles = {
         fontSize: '0.9rem',
     },
 
-    // ================================================================
-    // Column 4: Alerts Panel
-    // ================================================================
     alertsPanel: {
         borderLeft: `1px solid ${theme.borderDefault}`,
         padding: '16px',
         overflowY: 'auto',
         height: '100%',
     },
-    panelTitle: { fontSize: '14px', fontWeight: '700', color: theme.textPrimary, margin: '0 0 12px' },
-    alertForm: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    alertLabel: { display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px', color: theme.textSecondary },
-    charCount: { fontSize: '11px', color: theme.textMuted },
+    panelTitle: {
+        fontSize: '14px',
+        fontWeight: '700',
+        color: theme.textPrimary,
+        margin: '0 0 12px',
+    },
+    alertForm: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+    },
+    alertLabel: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        fontSize: '11px',
+        color: theme.textSecondary,
+    },
+    charCount: {
+        fontSize: '11px',
+        color: theme.textMuted,
+    },
     sendAlertBtn: {
         padding: '12px',
         background: theme.accentRed,
@@ -276,105 +338,27 @@ export const styles = {
         fontWeight: '700',
         cursor: 'pointer',
     },
-    alertHistory: { display: 'flex', flexDirection: 'column', gap: '8px' },
+    alertHistory: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+    },
     alertHistoryItem: {
         background: theme.bgSecondary,
         border: `1px solid ${theme.borderDefault}`,
         borderRadius: '10px',
         padding: '10px',
     },
-    alertHistoryMsg: { fontSize: '12px', color: theme.textPrimary, marginBottom: '4px' },
-    alertHistoryMeta: { fontSize: '10px', color: theme.textMuted },
-
-    // ================================================================
-    // Column 2: SlideOutPanel
-    // ================================================================
-    slideOutPanel: {
-        background: theme.bgSecondary,
-        borderRight: `1px solid ${theme.borderDefault}`,
-        padding: '16px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        width: '100%',
-    },
-    slideOutHeader: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingBottom: '12px',
-        borderBottom: `1px solid ${theme.borderDefault}`,
-        flexShrink: 0,
-    },
-    slideOutHeaderLeft: { flex: 1 },
-    slideOutClose: {
-        background: 'transparent',
-        border: 'none',
-        color: theme.textMuted,
-        fontSize: '18px',
-        cursor: 'pointer',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        ':hover': { background: 'rgba(255,255,255,0.05)' },
-    },
-    slideOutTitle: { fontSize: '18px', fontWeight: '700', color: theme.textPrimary },
-    slideOutRoute: { fontSize: '13px', color: theme.textSecondary, marginTop: '4px' },
-    slideOutMeta: {
-        display: 'flex',
-        gap: '16px',
+    alertHistoryMsg: {
         fontSize: '12px',
-        color: theme.textMuted,
-        marginTop: '8px',
-        flexWrap: 'wrap',
+        color: theme.textPrimary,
+        marginBottom: '4px',
     },
-    slideOutBody: {
-        flex: 1,
-        overflowY: 'auto',
-        paddingRight: '4px',
-    },
-    slideOutEmpty: { color: theme.textMuted, fontSize: '13px', textAlign: 'center', padding: '40px 0' },
-
-    waypointsList: { display: 'flex', flexDirection: 'column', gap: '6px' },
-    waypointItem: {
-        padding: '10px 12px',
-        borderRadius: '8px',
-        border: `1px solid ${theme.borderDefault}`,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        ':hover': { background: 'rgba(255,255,255,0.03)' },
-    },
-    waypointHeader: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '8px',
-    },
-    waypointKm: { fontSize: '12px', fontWeight: '600', color: theme.textPrimary },
-    waypointRisk: { fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' },
-    waypointExpand: { fontSize: '10px', color: theme.textMuted },
-    waypointDetails: {
-        marginTop: '8px',
-        paddingTop: '8px',
-        borderTop: `1px solid ${theme.borderDefault}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-    },
-    waypointSummary: { fontSize: '12px', color: theme.textPrimary, lineHeight: 1.4 },
-    waypointRecommendation: { fontSize: '11px', color: '#10b981' },
-    waypointRaw: {
-        display: 'flex',
-        gap: '12px',
+    alertHistoryMeta: {
         fontSize: '10px',
         color: theme.textMuted,
-        flexWrap: 'wrap',
     },
-    waypointSpeed: { fontSize: '10px', color: theme.textSecondary },
 
-    // ================================================================
-    // Layers Control (on map)
-    // ================================================================
     layersControl: {
         position: 'absolute',
         top: '12px',
@@ -400,13 +384,142 @@ export const styles = {
         transition: 'all 0.2s ease',
         textAlign: 'center',
         minWidth: '130px',
-        ':disabled': { opacity: 0.4, cursor: 'not-allowed' },
-        ':hover:not(:disabled)': { transform: 'scale(1.05)' },
+        ':disabled': {
+            opacity: 0.4,
+            cursor: 'not-allowed',
+        },
+        ':hover:not(:disabled)': {
+            transform: 'scale(1.05)',
+        },
     },
 
-    // ================================================================
-    // Plan Route Modal
-    // ================================================================
+    slideOutPanel: {
+        background: theme.bgSecondary,
+        borderRight: `1px solid ${theme.borderDefault}`,
+        padding: '16px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+    },
+    slideOutHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        paddingBottom: '12px',
+        borderBottom: `1px solid ${theme.borderDefault}`,
+        flexShrink: 0,
+    },
+    slideOutHeaderLeft: {
+        flex: 1,
+    },
+    slideOutClose: {
+        background: 'transparent',
+        border: 'none',
+        color: theme.textMuted,
+        fontSize: '18px',
+        cursor: 'pointer',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        ':hover': {
+            background: 'rgba(255,255,255,0.05)',
+        },
+    },
+    slideOutTitle: {
+        fontSize: '18px',
+        fontWeight: '700',
+        color: theme.textPrimary,
+    },
+    slideOutRoute: {
+        fontSize: '13px',
+        color: theme.textSecondary,
+        marginTop: '4px',
+    },
+    slideOutMeta: {
+        display: 'flex',
+        gap: '16px',
+        fontSize: '12px',
+        color: theme.textMuted,
+        marginTop: '8px',
+        flexWrap: 'wrap',
+    },
+    slideOutBody: {
+        flex: 1,
+        overflowY: 'auto',
+        paddingRight: '4px',
+    },
+    slideOutEmpty: {
+        color: theme.textMuted,
+        fontSize: '13px',
+        textAlign: 'center',
+        padding: '40px 0',
+    },
+
+    waypointsList: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+    },
+    waypointItem: {
+        padding: '10px 12px',
+        borderRadius: '8px',
+        border: `1px solid ${theme.borderDefault}`,
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        ':hover': {
+            background: 'rgba(255,255,255,0.03)',
+        },
+    },
+    waypointHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: '8px',
+    },
+    waypointKm: {
+        fontSize: '12px',
+        fontWeight: '600',
+        color: theme.textPrimary,
+    },
+    waypointRisk: {
+        fontSize: '10px',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+    },
+    waypointExpand: {
+        fontSize: '10px',
+        color: theme.textMuted,
+    },
+    waypointDetails: {
+        marginTop: '8px',
+        paddingTop: '8px',
+        borderTop: `1px solid ${theme.borderDefault}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+    },
+    waypointSummary: {
+        fontSize: '12px',
+        color: theme.textPrimary,
+        lineHeight: 1.4,
+    },
+    waypointRecommendation: {
+        fontSize: '11px',
+        color: '#10b981',
+    },
+    waypointRaw: {
+        display: 'flex',
+        gap: '12px',
+        fontSize: '10px',
+        color: theme.textMuted,
+        flexWrap: 'wrap',
+    },
+    waypointSpeed: {
+        fontSize: '10px',
+        color: theme.textSecondary,
+    },
+
     modalOverlay: {
         position: 'fixed',
         top: 0,
@@ -431,8 +544,18 @@ export const styles = {
         overflowY: 'auto',
         boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
     },
-    modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-    modalTitle: { fontSize: '18px', fontWeight: '700', color: theme.textPrimary, margin: 0 },
+    modalHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+    },
+    modalTitle: {
+        fontSize: '18px',
+        fontWeight: '700',
+        color: theme.textPrimary,
+        margin: 0,
+    },
     modalClose: {
         background: 'transparent',
         border: 'none',
@@ -441,11 +564,25 @@ export const styles = {
         cursor: 'pointer',
         padding: '4px 8px',
         borderRadius: '4px',
-        ':hover': { background: 'rgba(255,255,255,0.05)' },
+        ':hover': {
+            background: 'rgba(255,255,255,0.05)',
+        },
     },
-    modalBody: { display: 'flex', flexDirection: 'column', gap: '16px' },
-    field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-    label: { fontSize: '13px', fontWeight: '500', color: theme.textSecondary },
+    modalBody: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+    },
+    field: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+    },
+    label: {
+        fontSize: '13px',
+        fontWeight: '500',
+        color: theme.textSecondary,
+    },
     input: {
         width: '100%',
         padding: '10px 12px',
@@ -468,7 +605,12 @@ export const styles = {
         cursor: 'pointer',
         marginTop: '8px',
         transition: 'opacity 0.2s',
-        ':hover': { opacity: 0.9 },
-        ':disabled': { opacity: 0.6, cursor: 'not-allowed' },
+        ':hover': {
+            opacity: 0.9,
+        },
+        ':disabled': {
+            opacity: 0.6,
+            cursor: 'not-allowed',
+        },
     },
 };
