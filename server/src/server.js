@@ -5,15 +5,34 @@ console.log("server flow start")
 require('dotenv').config();
 console.log("server end calling .env")
 
+<<<<<<< HEAD
 const app = require('./app'); 
 const dpConnection = require('./config/db');
+=======
+const http = require('http'); // for socket.io
+const app = require('./app'); 
+const dpConnection = require('./config/db');
+const {initSocket} = require('./socket/socketManager');
+>>>>>>> origin/ElSayed
 
 const PORT = process.env.PORT || 6000;
 
 const startServer = async ()=>{
     await dpConnection(); // we make the server wait the db to start first if not then shut the server down no need to it to be runed
+<<<<<<< HEAD
     app.listen (PORT, ()=>{ // if db worked well then listen
         console.log(`server is running on port: ${PORT}`); // if all done well then output this msg
+=======
+
+    // http.createServer wraps the express app so socket.io can attach to the SAME
+    // server/port instead of needing a separate one. app.listen() alone can't do this.
+    const httpServer = http.createServer(app);
+    initSocket(httpServer);
+
+    httpServer.listen (PORT, ()=>{ // if db worked well then listen
+        console.log(`server is running on port: ${PORT}`); // if all done well then output this msg
+        console.log(`socket.io is attached and ready`);
+>>>>>>> origin/ElSayed
     });
 }
 

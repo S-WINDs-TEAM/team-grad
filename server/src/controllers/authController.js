@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
+const Company = require('../models/Company');
 const UAParser = require('ua-parser-js'); // a library to analyze the user-agent coplix text to get the brwoser name
 const geoIp = require('geoip-lite'); // getting regin
 //generate AccessToken
@@ -51,10 +53,13 @@ const getSecurityData= (req) => {
       const countryCode = geo ? geo.country: 'unknown'; // eg, usa, us, etc.
     return {cleanFingerprint, ip, countryCode};
 
+<<<<<<< HEAD
     // return {
     //     userAgent: req.headers['user-agent'] || 'unknown',
     //     ip: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1'
     // };
+=======
+>>>>>>> origin/ElSayed
 };
 
 //endpoints controllers
@@ -67,7 +72,11 @@ const register = async (req, res)=>{
         if (existingUser) {
             return res.status(409).json({msg: "email already in use"});
         }
+<<<<<<< HEAD
         const user = await User.create({name, email, password, role, vehicleType});
+=======
+        const user = await User.create({name, email, password, role, vehicleType, role: 'individual'});
+>>>>>>> origin/ElSayed
 
         const accessToken = generateAccessToken(user._id);
         const refreshToken = generateRefreshToken(user._id);
@@ -75,7 +84,10 @@ const register = async (req, res)=>{
         //save refreshtoken in the db so we can checked it out any time we want
         // user.refreshToken = refreshToken;
         //more security date save
+<<<<<<< HEAD
         // const {userAgent, ip} = getSecurityData(req);
+=======
+>>>>>>> origin/ElSayed
         const {cleanFingerprint, ip, countryCode} = getSecurityData(req);
 
         //create the refreshtoken for the regisered user
@@ -83,7 +95,10 @@ const register = async (req, res)=>{
             token: refreshToken,
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 7*24*60*60*1000),
+<<<<<<< HEAD
             // deviceFingerprint: userAgent,
+=======
+>>>>>>> origin/ElSayed
             deviceFingerprint: cleanFingerprint,
             lastIP: ip,
             countryCode: countryCode,
@@ -102,6 +117,10 @@ const register = async (req, res)=>{
                 email: user.email,
                 role: user.role,
                 vehicleType: user.vehicleType,
+<<<<<<< HEAD
+=======
+                vehicleHeight:user.vehicleHeight,
+>>>>>>> origin/ElSayed
             },
         });
 
@@ -110,6 +129,75 @@ const register = async (req, res)=>{
     }
 };
 
+<<<<<<< HEAD
+=======
+// company registration — creates the Company doc + the company_admin user together.
+// the admin is admin-only: manages/monitors the fleet, never drives themselves.
+const registerCompany = async (req, res) => {
+    try {
+        const { companyName, industry, adminName, email, password } = req.body;
+
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(409).json({ msg: 'email already in use' });
+        }
+
+        // create the admin user first, link companyId right after the company exists
+        const admin = await User.create({
+            name: adminName,
+            email,
+            password,
+            role: 'company_admin',
+        });
+
+        let company;
+        try {
+            company = await Company.create({
+                name: companyName,
+                industry: industry || null,
+                ownerId: admin._id,
+            });
+        } catch (companyErr) {
+            // rollback: don't leave an orphan admin user with no company if this fails
+            await User.findByIdAndDelete(admin._id);
+            throw companyErr;
+        }
+
+        admin.companyId = company._id;
+
+        const accessToken = generateAccessToken(admin._id);
+        const refreshToken = generateRefreshToken(admin._id);
+        const { cleanFingerprint, ip, countryCode } = getSecurityData(req);
+
+        admin.refreshToken = {
+            token: refreshToken,
+            createdAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            deviceFingerprint: cleanFingerprint,
+            lastIP: ip,
+            countryCode: countryCode,
+        };
+        await admin.save();
+
+        setTokenCookies(res, accessToken, refreshToken);
+
+        res.status(201).json({
+            msg: 'company registered successfully',
+            user: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role,
+                companyId: company._id,
+                companyName: company.name,
+            },
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+>>>>>>> origin/ElSayed
 //login endpoint 
 const login = async (req, res)=>{
     try{
@@ -117,6 +205,13 @@ const login = async (req, res)=>{
         const {email, password} =req.body;
         const user = await User.findOne({email});
         if (!user) return res.status(401).json({msg: 'invalid credntials'});
+<<<<<<< HEAD
+=======
+        
+        if (user.accountStatus === 'invited') {
+            return res.status(403).json({ msg: 'account not activated yet — please use your invite link first' });}
+
+>>>>>>> origin/ElSayed
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) return res.status(401).json({msg: 'invalid credentials'});
@@ -148,6 +243,10 @@ const login = async (req, res)=>{
                 email: user.email,
                 role: user.role,
                 vehicleType: user.vehicleType,
+<<<<<<< HEAD
+=======
+                companyId: user.companyId,
+>>>>>>> origin/ElSayed
             },
         });
 
@@ -264,6 +363,10 @@ const getMe = async (req, res) => {
                 email: req.user.email,
                 role: req.user.role,
                 vehicleType: req.user.vehicleType,
+<<<<<<< HEAD
+=======
+                companyId: req.user.companyId,
+>>>>>>> origin/ElSayed
             },
         });
 
@@ -273,7 +376,90 @@ const getMe = async (req, res) => {
 };
 
 
+<<<<<<< HEAD
 module.exports = { register, login, refresh, logout, getMe };
 
+=======
+// GET /api/auth/invite/:token — used by the "set your password" page to check the
+// link is valid BEFORE showing the form, and to show the driver's/company's name.
+const validateInviteToken = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const driver = await User.findOne({
+            inviteToken: hashedToken,
+            inviteTokenExpiry: { $gt: new Date() },
+            accountStatus: 'invited',
+        }).select('+inviteToken +inviteTokenExpiry').populate('companyId', 'name');
+
+        if (!driver) {
+            return res.status(400).json({ success: false, msg: 'invite link is invalid or expired' });
+        }
+
+        res.status(200).json({
+            success: true,
+            driver: {
+                name: driver.name,
+                email: driver.email,
+                companyName: driver.companyId ? driver.companyId.name : null,
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// POST /api/auth/invite/:token/accept — driver sets their own password, account goes 'active'
+const acceptInvite = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const driver = await User.findOne({
+            inviteToken: hashedToken,
+            inviteTokenExpiry: { $gt: new Date() },
+            accountStatus: 'invited',
+        }).select('+inviteToken +inviteTokenExpiry');
+
+        if (!driver) {
+            return res.status(400).json({ success: false, msg: 'invite link is invalid or expired' });
+        }
+
+        driver.password = password; // hashed automatically by the pre('save') hook
+        driver.accountStatus = 'active';
+        driver.inviteToken = null;
+        driver.inviteTokenExpiry = null;
+        await driver.save();
+
+        res.status(200).json({ success: true, msg: 'account activated — you can now log in' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// POST /api/auth/me/photo — any logged-in user (individual/company_admin/company_driver)
+const uploadProfilePhoto = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, msg: 'no file uploaded' });
+        }
+
+        const photoUrl = `/uploads/${req.file.filename}`;
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { profilePhoto: photoUrl },
+            { new: true }
+        );
+
+        res.status(200).json({ success: true, profilePhoto: user.profilePhoto });
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { register, registerCompany, login, refresh, logout, getMe, validateInviteToken, acceptInvite, uploadProfilePhoto };
+>>>>>>> origin/ElSayed
 
 

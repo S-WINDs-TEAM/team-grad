@@ -7,6 +7,18 @@ import store, {persistor} from './store/index.js';
 import App from './App.jsx';
 import './index.css';
 
+<<<<<<< HEAD
+=======
+// PWA service worker — registered after load so it never blocks first paint
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/sw.js').catch((err) => {
+//       console.error('service worker registration failed:', err);
+//     });
+//   });
+// }
+
+>>>>>>> origin/ElSayed
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Provider store={store}>
