@@ -1,100 +1,52 @@
-import { useForm } from 'react-hook-form';
-import { useNavigate, Link } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-<<<<<<< HEAD
-import toast from 'react-hot-toast';
-
-=======
-import { theme } from '../styles/theme';
->>>>>>> origin/ElSayed
+import { useForm } from "react-hook-form";
+import { useNavigate, Link } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
+import { theme } from "../styles/theme";
 
 const LoginPage = () => {
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm();
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     try {
-<<<<<<< HEAD
-      await login(data);
-      toast.success('welcome back!'); //msg for user
-      navigate('/home');
-    } catch (err) {
-      // alert(err.response?.data?.msg || 'Login failed');
-      toast.error(err.response?.data?.msg || 'Login failed'); // msg insted of alart
-
-=======
       // await login(data);
       const response = await login(data);
       const role = response.data.user.role;
 
       // route each role to its own landing page — company_admin manages the fleet,
-    // company_driver shares live location, individual plans personal trips
-    if(role=== 'company_admin') navigate('/fleet');
-    else if (role === 'company_driver') navigate('/fleet-driver');
-    else navigate('/home');
+      // company_driver shares live location, individual plans personal trips
+      if (role === "company_admin") navigate("/fleet");
+      else if (role === "company_driver") navigate("/fleet-driver");
+      else navigate("/home");
     } catch (err) {
       // BUG FIX: mirror the RegisterPage fix — when err.response is
       // undefined the server wasn't reachable (not a credentials problem).
       // Surface the real reason instead of always saying "Login failed".
-      console.error('login failed — status:', err.response?.status, '| message:', err.message, '| code:', err.code);
+      console.error(
+        "login failed — status:",
+        err.response?.status,
+        "| message:",
+        err.message,
+        "| code:",
+        err.code,
+      );
       if (!err.response) {
-        alert('Cannot reach the server — is it running on :5000 with MongoDB up?');
+        alert(
+          "Cannot reach the server — is it running on :5000 with MongoDB up?",
+        );
       } else {
-        alert(err.response?.data?.msg || 'Login failed');
+        alert(err.response?.data?.msg || "Login failed");
       }
->>>>>>> origin/ElSayed
     }
   };
 
   return (
-<<<<<<< HEAD
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.logo}>S-WINDs 🌬️</h1>
-        <p style={styles.subtitle}>Smart Weather Navigation</p>
-
-        <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              style={styles.input}
-              type="email"
-              placeholder="you@example.com"
-              {...register('email', { required: 'Email is required' })}
-            />
-            {errors.email && <span style={styles.error}>{errors.email.message}</span>}
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              style={styles.input}
-              type="password"
-              placeholder="••••••"
-              {...register('password', { required: 'Password is required' })}
-            />
-            {errors.password && <span style={styles.error}>{errors.password.message}</span>}
-          </div>
-
-          <button
-            type="submit"
-            style={isSubmitting ? styles.buttonDisabled : styles.button}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Logging in...' : 'Login'}
-          </button>
-
-        </form>
-
-        <p style={styles.link}>
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
-      </div>
-=======
     <div style={styles.page}>
-
       {/* ===== يسار: atmospheric panel ===== */}
       <div style={styles.leftPanel}>
         <div style={styles.leftGlow} />
@@ -108,7 +60,8 @@ const LoginPage = () => {
         {/* Hero text */}
         <div style={styles.leftContent}>
           <h1 style={styles.leftTitle}>
-            Drive Smart.<br />
+            Drive Smart.
+            <br />
             <span style={{ color: theme.accentBlue }}>Stay Ahead.</span>
           </h1>
           <p style={styles.leftSub}>
@@ -118,11 +71,11 @@ const LoginPage = () => {
           {/* Feature badges */}
           <div style={styles.featuresList}>
             {[
-              { icon: '🌦', text: 'ETA-Based Weather Forecast' },
-              { icon: '🗺', text: 'Smart Route Recommendations' },
-              { icon: '🛡', text: 'Per-Waypoint Risk Analysis' },
-              { icon: '⚡', text: 'Geospatial Caching Engine' },
-            ].map(f => (
+              { icon: "🌦", text: "ETA-Based Weather Forecast" },
+              { icon: "🗺", text: "Smart Route Recommendations" },
+              { icon: "🛡", text: "Per-Waypoint Risk Analysis" },
+              { icon: "⚡", text: "Geospatial Caching Engine" },
+            ].map((f) => (
               <div key={f.text} style={styles.featureItem}>
                 <span style={styles.featureIcon}>{f.icon}</span>
                 <span style={styles.featureText}>{f.text}</span>
@@ -133,12 +86,27 @@ const LoginPage = () => {
 
         {/* Bottom road visual */}
         <div style={styles.roadVisual}>
-          <svg width="100%" height="80" viewBox="0 0 400 80" preserveAspectRatio="none">
-            <path d="M 0 80 Q 200 20 400 40" stroke="rgba(37,99,235,0.3)" strokeWidth="1" fill="none"/>
-            <path d="M 0 80 Q 200 30 400 50" stroke="rgba(37,99,235,0.15)" strokeWidth="1" fill="none"/>
-            <circle cx="120" cy="58" r="3" fill="#2563EB" opacity="0.6"/>
-            <circle cx="250" cy="35" r="3" fill="#10B981" opacity="0.6"/>
-            <circle cx="350" cy="45" r="3" fill="#F59E0B" opacity="0.5"/>
+          <svg
+            width="100%"
+            height="80"
+            viewBox="0 0 400 80"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M 0 80 Q 200 20 400 40"
+              stroke="rgba(37,99,235,0.3)"
+              strokeWidth="1"
+              fill="none"
+            />
+            <path
+              d="M 0 80 Q 200 30 400 50"
+              stroke="rgba(37,99,235,0.15)"
+              strokeWidth="1"
+              fill="none"
+            />
+            <circle cx="120" cy="58" r="3" fill="#2563EB" opacity="0.6" />
+            <circle cx="250" cy="35" r="3" fill="#10B981" opacity="0.6" />
+            <circle cx="350" cy="45" r="3" fill="#F59E0B" opacity="0.5" />
           </svg>
         </div>
       </div>
@@ -152,7 +120,6 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>
-
             {/* Email */}
             <div style={styles.field}>
               <label style={styles.label}>Email address</label>
@@ -162,10 +129,12 @@ const LoginPage = () => {
                   style={styles.input}
                   type="email"
                   placeholder="you@example.com"
-                  {...register('email', { required: 'Email is required' })}
+                  {...register("email", { required: "Email is required" })}
                 />
               </div>
-              {errors.email && <span style={styles.error}>{errors.email.message}</span>}
+              {errors.email && (
+                <span style={styles.error}>{errors.email.message}</span>
+              )}
             </div>
 
             {/* Password */}
@@ -177,10 +146,14 @@ const LoginPage = () => {
                   style={styles.input}
                   type="password"
                   placeholder="••••••••"
-                  {...register('password', { required: 'Password is required' })}
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
                 />
               </div>
-              {errors.password && <span style={styles.error}>{errors.password.message}</span>}
+              {errors.password && (
+                <span style={styles.error}>{errors.password.message}</span>
+              )}
             </div>
 
             {/* Submit */}
@@ -189,233 +162,182 @@ const LoginPage = () => {
               disabled={isSubmitting}
               style={{ ...styles.submitBtn, opacity: isSubmitting ? 0.7 : 1 }}
             >
-              {isSubmitting ? 'Logging in...' : 'Log In →'}
+              {isSubmitting ? "Logging in..." : "Log In →"}
             </button>
-
           </form>
 
           <p style={styles.switchText}>
-            Don't have an account?{' '}
-            <Link to="/register" style={styles.link}>Create one</Link>
+            Don't have an account?{" "}
+            <Link to="/register" style={styles.link}>
+              Create one
+            </Link>
           </p>
 
           {/* BUG FIX: the element had TWO `style` props on the same <p>.
               React ignores the second one, so marginTop:'8px' was silently lost.
               Merged both into a single style object. */}
-          <p style={{ ...styles.switchText, marginTop: '8px' }}>
-            <Link to="/landing" style={{ ...styles.link, color: theme.textMuted, fontSize: '12px' }}>
+          <p style={{ ...styles.switchText, marginTop: "8px" }}>
+            <Link
+              to="/landing"
+              style={{
+                ...styles.link,
+                color: theme.textMuted,
+                fontSize: "12px",
+              }}
+            >
               ← Back to home
             </Link>
           </p>
         </div>
       </div>
-
->>>>>>> origin/ElSayed
     </div>
   );
 };
 
 const styles = {
-<<<<<<< HEAD
-  container: {
-    minHeight: '100vh',
-    backgroundColor: '#1F3864',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: '16px',
-    padding: '40px',
-    width: '100%',
-    maxWidth: '420px',
-    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-  },
-  logo: {
-    textAlign: 'center',
-    fontSize: '2.5rem',
-    color: '#1F3864',
-    margin: '0 0 8px 0',
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#6b7280',
-    marginBottom: '32px',
-    fontSize: '0.9rem',
-  },
-  form: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '6px' },
-  label: { fontSize: '0.875rem', fontWeight: '600', color: '#374151' },
-  input: {
-    padding: '12px 16px',
-    borderRadius: '8px',
-    border: '1px solid #d1d5db',
-    fontSize: '1rem',
-    outline: 'none',
-  },
-  error: { color: '#ef4444', fontSize: '0.75rem' },
-  button: {
-    padding: '14px',
-    backgroundColor: '#2E75B6',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '8px',
-  },
-  buttonDisabled: {
-    padding: '14px',
-    backgroundColor: '#93c5fd',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    cursor: 'not-allowed',
-    marginTop: '8px',
-  },
-  link: { textAlign: 'center', marginTop: '20px', color: '#6b7280', fontSize: '0.875rem' },
-=======
   page: {
-    minHeight: '100vh',
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    background: '#080C14',
-    fontFamily: 'system-ui, sans-serif',
+    minHeight: "100vh",
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    background: "#080C14",
+    fontFamily: "system-ui, sans-serif",
   },
 
   // ===== Left Panel =====
   leftPanel: {
-    background: 'linear-gradient(160deg, #0D1321 0%, #080C14 100%)',
-    padding: '32px',
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'relative',
-    overflow: 'hidden',
-    borderRight: '1px solid rgba(255,255,255,0.06)',
+    background: "linear-gradient(160deg, #0D1321 0%, #080C14 100%)",
+    padding: "32px",
+    display: "flex",
+    flexDirection: "column",
+    position: "relative",
+    overflow: "hidden",
+    borderRight: "1px solid rgba(255,255,255,0.06)",
   },
   leftGlow: {
-    position: 'absolute',
-    top: '-10%',
-    left: '-10%',
-    width: '70%',
-    height: '70%',
-    background: 'radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)',
-    pointerEvents: 'none',
+    position: "absolute",
+    top: "-10%",
+    left: "-10%",
+    width: "70%",
+    height: "70%",
+    background:
+      "radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%)",
+    pointerEvents: "none",
   },
   logo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: 'auto',
-    position: 'relative',
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "auto",
+    position: "relative",
     zIndex: 1,
   },
-  logoIcon: { fontSize: '22px', color: '#2563EB' },
-  logoText: { fontSize: '20px', fontWeight: '700', color: '#fff' },
+  logoIcon: { fontSize: "22px", color: "#2563EB" },
+  logoText: { fontSize: "20px", fontWeight: "700", color: "#fff" },
   leftContent: {
-    position: 'relative',
+    position: "relative",
     zIndex: 1,
-    marginBottom: '32px',
+    marginBottom: "32px",
   },
   leftTitle: {
-    fontSize: '38px',
-    fontWeight: '800',
-    color: '#fff',
+    fontSize: "38px",
+    fontWeight: "800",
+    color: "#fff",
     lineHeight: 1.2,
-    margin: '0 0 16px',
+    margin: "0 0 16px",
   },
   leftSub: {
-    fontSize: '15px',
-    color: '#64748B',
-    margin: '0 0 32px',
+    fontSize: "15px",
+    color: "#64748B",
+    margin: "0 0 32px",
   },
   featuresList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '14px',
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
   },
   featureItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.06)',
-    borderRadius: '10px',
-    padding: '12px 16px',
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: "10px",
+    padding: "12px 16px",
   },
-  featureIcon: { fontSize: '18px' },
-  featureText: { fontSize: '13px', color: '#94A3B8' },
-  roadVisual: { position: 'relative', zIndex: 1 },
+  featureIcon: { fontSize: "18px" },
+  featureText: { fontSize: "13px", color: "#94A3B8" },
+  roadVisual: { position: "relative", zIndex: 1 },
 
   // ===== Right Panel =====
   rightPanel: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '32px',
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "32px",
   },
   formCard: {
-    width: '100%',
-    maxWidth: '400px',
-    background: 'rgba(13,19,33,0.95)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '20px',
-    padding: '40px',
-    backdropFilter: 'blur(20px)',
+    width: "100%",
+    maxWidth: "400px",
+    background: "rgba(13,19,33,0.95)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "20px",
+    padding: "40px",
+    backdropFilter: "blur(20px)",
   },
-  formHeader: { marginBottom: '32px' },
-  formTitle: { fontSize: '26px', fontWeight: '700', color: '#fff', margin: '0 0 8px' },
-  formSub: { fontSize: '14px', color: '#64748B', margin: 0 },
-  form: { display: 'flex', flexDirection: 'column', gap: '20px' },
-  field: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { fontSize: '13px', fontWeight: '500', color: '#94A3B8' },
+  formHeader: { marginBottom: "32px" },
+  formTitle: {
+    fontSize: "26px",
+    fontWeight: "700",
+    color: "#fff",
+    margin: "0 0 8px",
+  },
+  formSub: { fontSize: "14px", color: "#64748B", margin: 0 },
+  form: { display: "flex", flexDirection: "column", gap: "20px" },
+  field: { display: "flex", flexDirection: "column", gap: "8px" },
+  label: { fontSize: "13px", fontWeight: "500", color: "#94A3B8" },
   inputWrapper: {
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
   },
   inputIcon: {
-    position: 'absolute',
-    left: '14px',
-    fontSize: '14px',
-    pointerEvents: 'none',
+    position: "absolute",
+    left: "14px",
+    fontSize: "14px",
+    pointerEvents: "none",
   },
   input: {
-    width: '100%',
-    padding: '13px 14px 13px 40px',
-    background: '#111827',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '10px',
-    color: '#fff',
-    fontSize: '14px',
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
+    width: "100%",
+    padding: "13px 14px 13px 40px",
+    background: "#111827",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "10px",
+    color: "#fff",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "border-color 0.2s",
   },
-  error: { fontSize: '12px', color: '#EF4444' },
+  error: { fontSize: "12px", color: "#EF4444" },
   submitBtn: {
-    padding: '14px',
-    background: '#2563EB',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '8px',
-    transition: 'opacity 0.2s',
+    padding: "14px",
+    background: "#2563EB",
+    color: "#fff",
+    border: "none",
+    borderRadius: "10px",
+    fontSize: "15px",
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "8px",
+    transition: "opacity 0.2s",
   },
   switchText: {
-    textAlign: 'center',
-    fontSize: '13px',
-    color: '#64748B',
-    marginTop: '24px',
+    textAlign: "center",
+    fontSize: "13px",
+    color: "#64748B",
+    marginTop: "24px",
   },
-  link: { color: '#2563EB', textDecoration: 'none', fontWeight: '500' },
->>>>>>> origin/ElSayed
+  link: { color: "#2563EB", textDecoration: "none", fontWeight: "500" },
 };
 
 export default LoginPage;

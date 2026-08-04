@@ -1,35 +1,46 @@
-
-<<<<<<< HEAD
-import { MapContainer, TileLayer, Polyline, Marker, Popup, CircleMarker } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { getRiskColor } from '../utils/riskColors';
-
-// leaflet bundling icons disapear bug fix
-=======
-import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import { useState } from 'react';
-import 'leaflet/dist/leaflet.css';
-import { getRiskColor } from '../utils/riskColors';
-import { interpretWeather } from '../utils/riskTranslator'; // ✅ NEW
+import {
+  MapContainer,
+  TileLayer,
+  Polyline,
+  Marker,
+  Popup,
+} from "react-leaflet";
+import L from "leaflet";
+import { useState } from "react";
+import "leaflet/dist/leaflet.css";
+import { getRiskColor } from "../utils/riskColors";
+import { interpretWeather } from "../utils/riskTranslator"; // ✅ NEW
 
 // Fix Leaflet default icon bug
->>>>>>> origin/ElSayed
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-<<<<<<< HEAD
-})
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
+const MapView = ({
+  routePolyline,
+  waypoints, // 30km (summary)
+  detailedWaypoints, // 5km (detailed) – maby undefined
+  origin,
+  destination,
+  vehicleType = "car", // ✅ NEW: default vehicle type for translation
+  vehicleHeight = "medium", // ✅ NEW: default height
+}) => {
+  const [showDetailed, setShowDetailed] = useState(false);
 
+  // waypoints based on selected btn
+  const displayWaypoints =
+    showDetailed && detailedWaypoints ? detailedWaypoints : waypoints;
+  const isDetailed = showDetailed && detailedWaypoints;
 
+  // badge
+  const pointsCount = displayWaypoints?.length || 0;
 
-
-
-const MapView = ({ routePolyline, waypoints, origin, destination }) => {
   if (!routePolyline || routePolyline.length === 0) {
     return (
       <div style={styles.placeholder}>
@@ -38,223 +49,27 @@ const MapView = ({ routePolyline, waypoints, origin, destination }) => {
     );
   }
 
-// fouce view map point in the middel of the map for the first time
-  const centerIndex = Math.floor(routePolyline.length / 2);
-  const center = routePolyline[centerIndex];
-
-  const createMarkerIcon = (color, label)=> {
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `
-         <div style="
-                    background-color: ${color};
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                    font-size: 12px;
-                    border: 3px solid white;
-                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-                ">
-                    ${label}
-                </div>
-      `,
-      iconSize: [32, 32],
-      iconAnchor: [16,16],
-      popupAnchor: [0, -16],
-    });
-  };
-    const startIcon = createMarkerIcon('#22c55e', 'S');
-    const endIcon = createMarkerIcon('#ef4444', 'E');
-  
-  
-     const getWaypointIcon = (riskLevel, index) => {
-        const color = getRiskColor(riskLevel);
-        return L.divIcon({
-            className: 'waypoint-marker',
-            html: `
-                <div style="
-                    background-color: ${color};
-                    width: 28px;
-                    height: 28px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                    font-size: 11px;
-                    border: 2px solid white;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                ">
-                    ${index + 1}
-                </div>
-            `,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-        });
-
-  }
-  return (
-    <div style={styles.mapWrapper}>
-      <MapContainer
-        center={center}
-        zoom={8}
-        style={styles.map}
-        scrollWheelZoom={true}
-        zoomControl={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {/*   full course */}
-         <Polyline
-                    positions={routePolyline}
-                    pathOptions={{ 
-                        color: '#2563eb', 
-                        weight: 5, 
-                        opacity: 0.9,
-                        lineJoin: 'round',
-                    }}
-                />
-
-        {/*  start point */}
-         {origin && (
-                    <Marker 
-                        position={[origin.lat, origin.lng]} 
-                        icon={startIcon}
-                    >
-                        <Popup>
-                            <strong>🟢 Starting Point</strong><br />
-                            {origin.address || 'Origin'}
-                        </Popup>
-                    </Marker>
-                )}
-
-        {/*  end point */}
-        {destination && (
-                    <Marker 
-                        position={[destination.lat, destination.lng]} 
-                        icon={endIcon}
-                    >
-                        <Popup>
-                            <strong>🔴 Destination</strong><br />
-                            {destination.address || 'Destination'}
-                        </Popup>
-                    </Marker>
-                )}
-
-        {/*     waypoint circle colored by risklevel value color   */}
-           {waypoints && waypoints.map((wp, i) => {
-                    const icon = getWaypointIcon(wp.weather.riskLevel, i);
-                    return (
-                        <Marker
-                            key={i}
-                            position={[wp.location.lat, wp.location.lng]}
-                            icon={icon}
-                        >
-                            <Popup>
-                                <div style={{ minWidth: '200px' }}>
-                                    <strong>📍 KM {Math.round(wp.distanceFromStart)}</strong><br />
-                                    <strong>ETA:</strong> {new Date(wp.eta).toLocaleTimeString()}<br />
-                                    <hr style={{ margin: '6px 0' }} />
-                                    <strong>Weather:</strong> {wp.weather.condition} ({wp.weather.description})<br />
-                                    <strong>Temperature:</strong> {wp.weather.temperature}°C<br />
-                                    <strong>Feels like:</strong> {wp.weather.feelsLike}°C<br />
-                                    <strong>Wind:</strong> {wp.weather.windSpeed} km/h<br />
-                                    <strong>Precipitation:</strong> {wp.weather.precipitation} mm<br />
-                                    <strong>Visibility:</strong> {wp.weather.visibility} km<br />
-                                    <hr style={{ margin: '6px 0' }} />
-                                    <strong>⚡ Max Safe Speed:</strong> {wp.maxSafeSpeed} km/h<br />
-                                    <span style={{ color: getRiskColor(wp.weather.riskLevel), fontWeight: 'bold' }}>
-                                        Risk: {wp.weather.riskLevel.toUpperCase()}
-                                    </span>
-                                </div>
-                            </Popup>
-                        </Marker>
-                    );
-                })}
-            </MapContainer>
-        </div>
-    );
-};
-const styles = {
-    mapWrapper: {
-        width: '100%',
-        height: '450px',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        border: '1px solid #2a2f3a',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-    },
-    map: { 
-        width: '100%', 
-        height: '100%' 
-    },
-    placeholder: {
-        width: '100%',
-        height: '450px',
-        borderRadius: '12px',
-        background: '#11151c',
-        border: '1px solid #2a2f3a',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#8a93a3',
-        fontSize: '0.9rem',
-    },
-=======
-});
-
-const MapView = ({
-  routePolyline,
-  waypoints,          // 30km (summary)
-  detailedWaypoints,  // 5km (detailed) – maby undefined
-  origin,
-  destination,
-  vehicleType = 'car',    // ✅ NEW: default vehicle type for translation
-  vehicleHeight = 'medium', // ✅ NEW: default height
-}) => {
-  const [showDetailed, setShowDetailed] = useState(false);
-
-  // waypoints based on selected btn
-  const displayWaypoints = showDetailed && detailedWaypoints ? detailedWaypoints : waypoints;
-  const isDetailed = showDetailed && detailedWaypoints;
-  
-  // badge
-  const pointsCount = displayWaypoints?.length || 0;
-
-  if (!routePolyline || routePolyline.length === 0) {
-    return <div style={styles.placeholder}>Map data not available for this trip.</div>;
-  }
-
   const centerIndex = Math.floor(routePolyline.length / 2);
   const center = routePolyline[centerIndex];
 
   // END AND START ICONS
   const createMarkerIcon = (color, label) =>
     L.divIcon({
-      className: 'custom-marker',
+      className: "custom-marker",
       html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:12px;border:3px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.3);">${label}</div>`,
       iconSize: [32, 32],
       iconAnchor: [16, 16],
       popupAnchor: [0, -16],
     });
 
-  const startIcon = createMarkerIcon('#22c55e', 'S');
-  const endIcon = createMarkerIcon('#ef4444', 'E');
+  const startIcon = createMarkerIcon("#22c55e", "S");
+  const endIcon = createMarkerIcon("#ef4444", "E");
 
   //  ICONS Waypoints
   const getWaypointIcon = (riskLevel, index) => {
     const color = getRiskColor(riskLevel);
     return L.divIcon({
-      className: 'waypoint-marker',
+      className: "waypoint-marker",
       html: `<div style="background:${color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:11px;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.25);">${index + 1}</div>`,
       iconSize: [28, 28],
       iconAnchor: [14, 14],
@@ -263,7 +78,13 @@ const MapView = ({
 
   return (
     <div style={styles.mapWrapper}>
-      <MapContainer center={center} zoom={8} style={styles.map} scrollWheelZoom zoomControl>
+      <MapContainer
+        center={center}
+        zoom={8}
+        style={styles.map}
+        scrollWheelZoom
+        zoomControl
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -272,7 +93,12 @@ const MapView = ({
         {/* main route */}
         <Polyline
           positions={routePolyline}
-          pathOptions={{ color: '#2563eb', weight: 5, opacity: 0.9, lineJoin: 'round' }}
+          pathOptions={{
+            color: "#2563eb",
+            weight: 5,
+            opacity: 0.9,
+            lineJoin: "round",
+          }}
         />
 
         {/* start*/}
@@ -281,7 +107,7 @@ const MapView = ({
             <Popup>
               <strong>🟢 Starting Point</strong>
               <br />
-              {origin.address || 'Origin'}
+              {origin.address || "Origin"}
             </Popup>
           </Marker>
         )}
@@ -292,7 +118,7 @@ const MapView = ({
             <Popup>
               <strong>🔴 Destination</strong>
               <br />
-              {destination.address || 'Destination'}
+              {destination.address || "Destination"}
             </Popup>
           </Marker>
         )}
@@ -304,8 +130,8 @@ const MapView = ({
           // NEW: Get interpreted summary and recommendation
           const { summary, recommendation } = interpretWeather(
             wp.weather,
-            vehicleType || 'car',
-            vehicleHeight || 'medium'
+            vehicleType || "car",
+            vehicleHeight || "medium",
           );
 
           // Build popup content with interpretation
@@ -318,7 +144,7 @@ const MapView = ({
               <p style="font-size:12px; color:#10b981;"><strong>✅ Recommendation:</strong> ${recommendation}</p>
               <hr />
               <div style="font-size:11px; color:#9ca3af;">
-                <strong>Weather:</strong> ${wp.weather.condition} (${wp.weather.description || ''})<br />
+                <strong>Weather:</strong> ${wp.weather.condition} (${wp.weather.description || ""})<br />
                 <strong>Temp:</strong> ${wp.weather.temperature}°C &nbsp;|&nbsp; <strong>Wind:</strong> ${wp.weather.windSpeed} km/h<br />
                 <strong>Precip:</strong> ${wp.weather.precipitation} mm &nbsp;|&nbsp; <strong>Visibility:</strong> ${wp.weather.visibility} km
               </div>
@@ -332,7 +158,11 @@ const MapView = ({
           `;
 
           return (
-            <Marker key={i} position={[wp.location.lat, wp.location.lng]} icon={icon}>
+            <Marker
+              key={i}
+              position={[wp.location.lat, wp.location.lng]}
+              icon={icon}
+            >
               <Popup>
                 <div dangerouslySetInnerHTML={{ __html: popupContent }} />
               </Popup>
@@ -347,17 +177,17 @@ const MapView = ({
             style={{
               ...styles.toggleButton,
               background: isDetailed
-                ? 'rgba(37, 99, 235, 0.9)'
-                : 'rgba(13, 19, 33, 0.85)',
-              borderColor: isDetailed ? '#3b82f6' : '#2a2f3a',
+                ? "rgba(37, 99, 235, 0.9)"
+                : "rgba(13, 19, 33, 0.85)",
+              borderColor: isDetailed ? "#3b82f6" : "#2a2f3a",
             }}
             title={
               isDetailed
-                ? 'Switch to summary view (30km)'
-                : 'Switch to detailed view (5km)'
+                ? "Switch to summary view (30km)"
+                : "Switch to detailed view (5km)"
             }
           >
-            <span>{isDetailed ? '📊 Summary' : '🔍 Details'}</span>
+            <span>{isDetailed ? "📊 Summary" : "🔍 Details"}</span>
             <span style={styles.badge}>{pointsCount} pts</span>
           </button>
         </div>
@@ -368,59 +198,58 @@ const MapView = ({
 
 const styles = {
   mapWrapper: {
-    width: '100%',
-    height: '450px',
-    borderRadius: '12px',
-    overflow: 'hidden',
-    border: '1px solid #2a2f3a',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-    position: 'relative',
+    width: "100%",
+    height: "450px",
+    borderRadius: "12px",
+    overflow: "hidden",
+    border: "1px solid #2a2f3a",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+    position: "relative",
   },
-  map: { width: '100%', height: '100%' },
+  map: { width: "100%", height: "100%" },
   placeholder: {
-    width: '100%',
-    height: '450px',
-    borderRadius: '12px',
-    background: '#11151c',
-    border: '1px solid #2a2f3a',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#8a93a3',
-    fontSize: '0.9rem',
+    width: "100%",
+    height: "450px",
+    borderRadius: "12px",
+    background: "#11151c",
+    border: "1px solid #2a2f3a",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#8a93a3",
+    fontSize: "0.9rem",
   },
   buttonOverlay: {
-    position: 'absolute',
-    top: '12px',
-    right: '12px',
+    position: "absolute",
+    top: "12px",
+    right: "12px",
     zIndex: 1000,
-    pointerEvents: 'none',
+    pointerEvents: "none",
   },
   toggleButton: {
-    pointerEvents: 'auto',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '8px 14px',
-    borderRadius: '10px',
-    border: '1px solid',
-    color: '#fff',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    backdropFilter: 'blur(8px)',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-    fontFamily: 'system-ui, sans-serif',
+    pointerEvents: "auto",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "8px 14px",
+    borderRadius: "10px",
+    border: "1px solid",
+    color: "#fff",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer",
+    backdropFilter: "blur(8px)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+    fontFamily: "system-ui, sans-serif",
   },
   badge: {
-    background: 'rgba(255,255,255,0.15)',
-    padding: '2px 8px',
-    borderRadius: '12px',
-    fontSize: '10px',
-    fontWeight: '700',
-    color: '#94a3b8',
+    background: "rgba(255,255,255,0.15)",
+    padding: "2px 8px",
+    borderRadius: "12px",
+    fontSize: "10px",
+    fontWeight: "700",
+    color: "#94a3b8",
   },
->>>>>>> origin/ElSayed
 };
 
 export default MapView;
