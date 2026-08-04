@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { MapContainer, TileLayer } from "react-leaflet";
 import toast from "react-hot-toast";
-import useAuth from "../hooks/useAuth";
-import useSocket from "../hooks/useSocket";
+import useAuth from "../../hooks/useAuth";
+import useSocket from "../../hooks/useSocket";
 import {
   getFleetDashboardApi,
   getDriversApi,
@@ -13,17 +13,18 @@ import {
   sendAlertApi,
   uploadVehiclePhotoApi,
   getFleetStatusApi,
-} from "../api/fleetApi";
-import { planRouteApi, getTripByIdApi } from "../api/routeApi";
-import { setVehicles, upsertVehicle } from "../store/fleetSlice";
-import { theme } from "../styles/theme";
+} from "../../api/fleetApi";
+import { planRouteApi, getTripByIdApi } from "../../api/routeApi";
+import { setVehicles, upsertVehicle } from "../../store/fleetSlice";
+import { theme } from "../../styles/theme";
 
 // Components
-import FleetSidebar from "../components/fleet/FleetSidebar";
-import FleetMapController from "../components/fleet/FleetMapController";
-import SlideOutPanel from "../components/fleet/SlideOutPanel";
-import PlanRouteModal from "../components/fleet/PlanRouteModal";
-import { styles } from "../components/fleet/FleetDashboard.styles";
+import FleetSidebar from "../../components/fleet/FleetSidebar";
+import FleetMapController from "../../components/fleet/FleetMapController";
+import SlideOutPanel from "../../components/fleet/SlideOutPanel";
+import PlanRouteModal from "../../components/fleet/PlanRouteModal";
+import { styles } from "../../components/fleet/FleetDashboard.styles";
+import FleetAuthorizedHeader from "../../components/FleetAuthorizedHeader";
 
 const StatCard = ({ label, value, icon, color }) => (
   <div style={styles.statCard}>
@@ -40,7 +41,7 @@ const StatCard = ({ label, value, icon, color }) => (
 const FleetDashboardPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   useSocket();
 
   const { vehicles, alerts, connected } = useSelector((state) => state.fleet);
@@ -284,11 +285,6 @@ const FleetDashboardPage = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
-  };
-
   const handleVehiclePhotoClick = (vehicleId) => {
     setPhotoTargetVehicleId(vehicleId);
     vehiclePhotoInputRef.current?.click();
@@ -371,21 +367,6 @@ const FleetDashboardPage = () => {
 
   return (
     <div style={styles.page}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.logo}>
-          <span style={styles.logoIcon}>◈</span>
-          <span style={styles.logoText}>S-WINDs</span>
-          <span style={styles.logoSubtext}>Fleet Management</span>
-        </div>
-        <div style={styles.headerRight}>
-          <span style={styles.userName}>{user?.name} · Admin</span>
-          <button style={styles.logoutBtn} onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
-
       {/* Stats */}
       <div style={styles.statsBar}>
         <StatCard label="Total Vehicles" value={stats.total} icon="🚚" />

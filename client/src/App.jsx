@@ -5,12 +5,14 @@ import HomePage from "./pages/HomePage";
 import PlanTripPage from "./pages/PlanTripPage";
 import LandingPage from "./pages/LandingPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
-import FleetDashboardPage from "./pages/FleetDashboardPage";
+import FleetDashboardPage from "./pages/FleetDashboard/FleetDashboardPage";
 import DriverTrackingPage from "./pages/DriverTrackingPage";
 // import RouteResultsPage from './pages/RouteResultsPage';
 import TripHistoryPage from "./pages/TripHistoryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
+import FleetAnalyticsPage from "./pages/FleetDashboard/FleetAnalyticsPage";
+import FleetDashboardLayout from "./pages/FleetDashboard/FleetDashboardLayout";
 
 function App() {
   return (
@@ -26,10 +28,13 @@ function App() {
           path="/fleet"
           element={
             <ProtectedRoute>
-              <FleetDashboardPage />
+              <FleetDashboardLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<FleetDashboardPage />} />
+          <Route path="analytics" element={<FleetAnalyticsPage />} />
+        </Route>
         <Route
           path="/fleet-driver"
           element={
