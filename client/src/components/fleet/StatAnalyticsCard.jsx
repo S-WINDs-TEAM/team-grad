@@ -8,7 +8,7 @@ export default function StatAnalyticsCard({
   active,
 }) {
   return (
-    <div className="bg-surface border border-outline-variant rounded-lg p-4 flex items-center gap-4">
+    <article className="bg-surface border border-outline-variant rounded-lg p-4 flex items-center gap-4">
       <div
         className={`w-12 h-12 rounded-full border-2 ${active ? "border-primary-fixed-dim" : "border-[#ffb74d]"} flex items-center justify-center`}
       >
@@ -52,6 +52,6 @@ export default function StatAnalyticsCard({
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
