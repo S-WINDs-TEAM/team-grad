@@ -38,6 +38,11 @@ const tripSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // tripNumber is a unique sequential number for each trip, useful for tracking and referencing trips without exposing the MongoDB ObjectId.
+    tripNumber: {
+      type: Number,
+      unique: true,
+    },
     origin: {
       lat: { type: Number, required: true },
       lng: { type: Number, required: true },
@@ -74,7 +79,11 @@ const tripSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-tripSchema.index({ userId: 1, createdAt: -1 });
+// Adding an index to optimize queries that fetch trips for a specific user, sorted by creation date. This is especially useful for displaying a user's trip history in reverse chronological order.
+tripSchema.index({ 
+  userId: 1,
+  createdAt: -1 
+});
 
 const Trip = mongoose.model('Trip', tripSchema);
 module.exports = Trip;
