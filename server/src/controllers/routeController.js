@@ -1,5 +1,7 @@
 const Trip = require('../models/Trip');
 
+const Counter = require('../models/Counter');
+
 const {getRoute, sampleWaypoints} = require('../services/mapService');
 const {getWeatherForLocationAndTime} = require('../services/weatherService');
 const {calculatemaxSafeSpeed, calculateRiskLevel} = require('../utils/geoUtils');
@@ -109,9 +111,22 @@ const planRoute = async (req, res, next) => {
         const totalDurationMin = (cumulativeEta.getTime() - departure.getTime()) / (60*1000);
 
         const routePolyline = route.coordinates.map(([lng, lat])=> [lat, lng]); // osrm stor data in lng -lat but leaflet stor it in lat -lang so we are swapping
+        
+            // increment trip counter
+            const counter = await Counter.findByIdAndUpdate(
+                'trip',
+                { $inc: { sequence: 1 } },
+                {
+                    new: true,
+                    upsert: true,
+                }
+            );
 
+        const tripNumber = counter.sequence;       
+        
         const trip = await Trip.create({
             userId: req.user._id,
+            tripNumber, // adding the tripNumber to know the trip sequence
             origin,
             destination,
             // vehicleType: vehicleType || 'car',
@@ -150,12 +165,30 @@ const planRoute = async (req, res, next) => {
 
 const getTripHistory = async (req, res, next) => {
     try{
-        const trips = await Trip.find({userId: req.user._id})
-        .sort({createdAt: -1})
-        .limit(10)
-        .select('-waypoints -routePolyline');
+        const page = parseInt(req.query.page) || 1;
 
-        res.status(200).json({success: true, trips});
+        const limit = parseInt(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+        
+        const totalCount = await Trip.countDocuments({
+            userId: req.user._id,
+        });
+            const trips = await Trip.find({ userId: req.user._id })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .select('-waypoints -routePolyline');
+
+        res.status(200).json({success: true, trips, totalCount ,
+            data: {
+                page,
+                limit,
+                totalPages: Math.ceil(totalCount / limit),
+                hasMore: skip + trips.length < totalCount,
+                // see if thers any equation than can be used to calculate the total pages and hasMore without using Math.ceil and skip + trips.length < totalCount
+            }
+        });
 
     }catch(err) {
         next(err);
