@@ -1,11 +1,12 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import Register from './pages/Register';
 import HomePage from './pages/HomePage';
 import PlanTripPage from './pages/PlanTripPage';
 import LandingPage from './pages/LandingPage';
 // import RouteResultsPage from './pages/RouteResultsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import TripHistoryPage from './pages/tripHistoryPage';
 import {Toaster} from 'react-hot-toast';
 
 function App() {
@@ -16,7 +17,7 @@ function App() {
       //login
       <Route path="/login" element={<LoginPage />} />
       //register
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/landing" element={<LandingPage />} />
       //home
       <Route 
@@ -32,12 +33,20 @@ function App() {
           <ProtectedRoute>
             <PlanTripPage />
           </ProtectedRoute>}/>
-          //result
+          //trip history
       {/* <Route path='/results' 
       element={<ProtectedRoute>
          <RouteResultsPage/> 
          </ProtectedRoute>}/> */}
-         //main
+         <Route
+  path="/history"
+  element={
+    <ProtectedRoute>
+      <TripHistoryPage />
+    </ProtectedRoute>
+  }
+/>
+//main
       <Route path="*" element={<Navigate to="/landing" />} />
     </Routes>
         </>
