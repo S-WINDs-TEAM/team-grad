@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Fragment, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -59,3 +60,61 @@ function Bottom(){return <footer><span><i></i>All Systems Operational</span><spa
 function Dashboard(){const [selected,setSelected]=useState(vehicles[4]);return <><Sidebar/><main className="min-h-screen"><Header/><Kpis/><div className="dashboard-grid"><FleetBoard selected={selected} setSelected={setSelected}/><div className="mid-col"><RouteMap selected={selected} setSelected={setSelected}/><Comparison/></div><div className="right-col"><WeatherImpact/><RiskAnalytics/><QuickActions/></div></div><Bottom/></main></>}
 function Placeholder(){return <><Sidebar/><main><Header/><div className="placeholder panel"><Truck size={42}/><h2>Fleet Intelligence</h2><p>This section is ready for your fleet data.</p></div></main></>}
 export default function App(){return <Tooltip.Provider delayDuration={250}><Toaster theme="dark" position="top-right"/><Routes><Route path="/dashboard" element={<Dashboard/>}/><Route path="/" element={<Navigate to="/dashboard" replace/>}/>{navItems.slice(1).map(([p])=><Route key={p} path={p} element={<Placeholder/>}/>)}<Route path="*" element={<Navigate to="/dashboard" replace/>}/></Routes></Tooltip.Provider>}
+=======
+import { Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import Register from './pages/Register';
+import HomePage from './pages/HomePage';
+import PlanTripPage from './pages/PlanTripPage';
+import LandingPage from './pages/LandingPage';
+// import RouteResultsPage from './pages/RouteResultsPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import TripHistoryPage from './pages/tripHistoryPage';
+import {Toaster} from 'react-hot-toast';
+
+function App() {
+  return (
+  <>
+  <Toaster position="top-right" toastOptions={{duration: 4000}}/>
+    <Routes>
+      //login
+      <Route path="/login" element={<LoginPage />} />
+      //register
+      <Route path="/register" element={<Register />} />
+      <Route path="/landing" element={<LandingPage />} />
+      //home
+      <Route 
+      path='/home'
+      element = {
+        <ProtectedRoute>
+          <HomePage/>
+        </ProtectedRoute>}/>
+        /plan and results
+      <Route
+        path="/plan"
+        element={
+          <ProtectedRoute>
+            <PlanTripPage />
+          </ProtectedRoute>}/>
+          //trip history
+      {/* <Route path='/results' 
+      element={<ProtectedRoute>
+         <RouteResultsPage/> 
+         </ProtectedRoute>}/> */}
+         <Route
+  path="/history"
+  element={
+    <ProtectedRoute>
+      <TripHistoryPage />
+    </ProtectedRoute>
+  }
+/>
+//main
+      <Route path="*" element={<Navigate to="/landing" />} />
+    </Routes>
+        </>
+  );
+}
+
+export default App;
+>>>>>>> 7cddbdd (adding register & trip history pages)
