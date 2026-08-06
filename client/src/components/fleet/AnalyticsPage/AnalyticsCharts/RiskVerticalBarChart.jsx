@@ -1,4 +1,4 @@
-import { COLORS } from "../../../styles/theme";
+import { COLORS } from "../../../../styles/theme";
 import defaultColorForValue from "./defaultColorHelper";
 import EmptyState from "./EmptyState";
 

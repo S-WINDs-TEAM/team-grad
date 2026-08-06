@@ -4,6 +4,7 @@ import { persistReducer, persistStore } from "redux-persist";
 import authReducer from "./authSlice";
 import tripReducer from "./tripSlice";
 import fleetReducer from "./fleetSlice";
+import fleetDashboardSidebarReducer from "./fleetDashboardSidebarSlice";
 
 const storage = {
   getItem: (key) => {
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   trip: tripReducer,
   fleet: fleetReducer,
+  fleetDashboardSidebar: fleetDashboardSidebarReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

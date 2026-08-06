@@ -1,6 +1,6 @@
-import AnalyticsCharts from "../../components/fleet/AnalyticsCharts/AnalyticsCharts";
-import AnalyticsInsightCard from "../../components/fleet/AnalyticsInsightCard";
-import StatAnalyticsCard from "../../components/fleet/StatAnalyticsCard";
+import AnalyticsCharts from "../../components/fleet/AnalyticsPage/AnalyticsCharts/AnalyticsCharts";
+import AnalyticsInsightCard from "../../components/fleet/AnalyticsPage/AnalyticsInsightCard";
+import StatAnalyticsCard from "../../components/fleet/AnalyticsPage/StatAnalyticsCard";
 
 export default function FleetAnalyticsPage() {
   return (
@@ -102,42 +102,42 @@ export default function FleetAnalyticsPage() {
         </div>
       </main>
 
-      <footer class="bottom-0 border-t border-outline-variant fixed left-0 w-full z-50 flex items-center justify-between px-page-margin bg-surface-container-low text-primary-fixed-dim flex-col xl:flex-row h-auto xl:h-bottom-bar-height py-2">
-        <div class="font-label-sm text-label-sm text-on-surface-variant text-center xl:text-left mb-1">
+      <footer className="bottom-0 border-t border-outline-variant fixed left-0 w-full z-50 flex items-center justify-between px-page-margin bg-surface-container-low text-primary-fixed-dim flex-col xl:flex-row h-auto xl:h-bottom-bar-height py-2">
+        <div className="font-label-sm text-label-sm text-on-surface-variant text-center xl:text-left mb-1">
           © 2026 S-Winds Fleet Intelligence
         </div>
-        <div class="flex items-center gap-2 xl:gap-6 flex-wrap justify-center xl:justify-end space-y-1">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
-            <span class="font-label-sm text-label-sm text-on-surface-variant">
+        <div className="flex items-center gap-2 xl:gap-6 flex-wrap justify-center xl:justify-end space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary-fixed-dim"></span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
               Active Vehicles:
             </span>
-            <span class="font-data-lg text-[16px] font-bold">256</span>
+            <span className="font-data-lg text-[16px] font-bold">256</span>
           </div>
-          <div class="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
-          <div class="flex items-center gap-2">
-            <span class="font-label-sm text-label-sm text-on-surface-variant">
+          <div className="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
+          <div className="flex items-center gap-2">
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
               Routes Today:
             </span>
-            <span class="font-data-lg text-[16px] font-bold text-primary">
+            <span className="font-data-lg text-[16px] font-bold text-primary">
               142
             </span>
           </div>
-          <div class="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
-          <div class="flex items-center gap-2">
-            <span class="font-label-sm text-label-sm text-on-surface-variant">
+          <div className="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
+          <div className="flex items-center gap-2">
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
               Alerts:
             </span>
-            <span class="font-data-lg text-[16px] font-bold text-error">
+            <span className="font-data-lg text-[16px] font-bold text-error">
               12
             </span>
           </div>
-          <div class="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
-          <div class="flex items-center gap-2">
-            <span class="font-label-sm text-label-sm text-on-surface-variant">
+          <div className="w-px h-1 xl:h-4 bg-outline-variant hidden xl:block"></div>
+          <div className="flex items-center gap-2">
+            <span className="font-label-sm text-label-sm text-on-surface-variant">
               High Risk Routes:
             </span>
-            <span class="font-data-lg text-[16px] font-bold text-error">
+            <span className="font-data-lg text-[16px] font-bold text-error">
               18
             </span>
           </div>

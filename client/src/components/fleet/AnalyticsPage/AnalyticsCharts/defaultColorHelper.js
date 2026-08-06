@@ -1,4 +1,4 @@
-import { COLORS } from "../../../styles/theme";
+import { COLORS } from "../../../../styles/theme";
 
 export default function defaultColorForValue(value, max) {
   const pct = max > 0 ? value / max : 0;

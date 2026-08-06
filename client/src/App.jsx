@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
@@ -13,6 +13,12 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
 import FleetAnalyticsPage from "./pages/FleetDashboard/FleetAnalyticsPage";
 import FleetDashboardLayout from "./pages/FleetDashboard/FleetDashboardLayout";
+import FleetOverviewPage from "./pages/FleetDashboard/FleetOverviewPage";
+import FleetTripHistoryPage from "./pages/FleetDashboard/FleetTripHistoryPage";
+import FleetRouteComparisonPage from "./pages/FleetDashboard/FleetRouteComparisonPage";
+import FleetVehicleListPage from "./pages/FleetDashboard/FleetVehicleListPage";
+import FleetSettingsPage from "./pages/FleetDashboard/FleetSettingsPage";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -20,6 +26,7 @@ function App() {
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <Routes>
         //login
+        <Route index element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         //register
         <Route path="/register" element={<RegisterPage />} />
@@ -33,7 +40,15 @@ function App() {
           }
         >
           <Route index element={<FleetDashboardPage />} />
+          <Route path="overview" element={<FleetOverviewPage />} />
+          <Route path="trip-history" element={<FleetTripHistoryPage />} />
+          <Route
+            path="route-comparison"
+            element={<FleetRouteComparisonPage />}
+          />
+          <Route path="vehicle-list" element={<FleetVehicleListPage />} />
           <Route path="analytics" element={<FleetAnalyticsPage />} />
+          <Route path="settings" element={<FleetSettingsPage />} />
         </Route>
         <Route
           path="/fleet-driver"
@@ -43,7 +58,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/landing" element={<LandingPage />} />
         //home
         <Route
           path="/home"
@@ -77,7 +91,7 @@ function App() {
          <RouteResultsPage/> 
          </ProtectedRoute>}/> */}
         //main
-        <Route path="*" element={<Navigate to="/landing" />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

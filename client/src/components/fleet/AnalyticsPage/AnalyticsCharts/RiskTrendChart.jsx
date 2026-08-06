@@ -1,6 +1,6 @@
 /*  Area / trend chart  */
 
-import { COLORS } from "../../../styles/theme";
+import { COLORS } from "../../../../styles/theme";
 import EmptyState from "./EmptyState";
 
 // Used for "Risk Trend (Last 30 Days)"

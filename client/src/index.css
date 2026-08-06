@@ -49,6 +49,11 @@ ul {
   fill: #b9cbc1;
 }
 
+.material-symbols-over {
+  font-variation-settings: "FILL" 1;
+  font-size: 24px;
+}
+
 @theme {
   --color-on-tertiary-container: #59647c;
   --color-inverse-surface: #d4e4fa;
