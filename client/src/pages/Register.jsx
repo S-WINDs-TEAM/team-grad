@@ -3,7 +3,7 @@ import { User, Mail, Lock, Eye, Car } from "lucide-react";
 const Register = () => {
   return (
     <div className="min-h-screen bg-[#07111F] p-4">
-      <div className="min-h-[calc(100vh-2rem)] overflow-hidden rounded-[32px] border border-slate-800 flex">
+      <div className="min-h-[calc(100vh-2rem)] overflow-hidden rounded-4xl border border-slate-800 flex">
         
         {/* Left Section */}
         <div className="hidden lg:flex flex-1 relative">
@@ -56,7 +56,7 @@ const Register = () => {
 
         {/* Right Section */}
         <div className="flex flex-1 items-center justify-center p-6 lg:p-10 bg-[#091321]">
-          <div className="w-full max-w-xl rounded-[32px] border border-slate-700 bg-[#0D1628]/90 p-8 backdrop-blur-xl shadow-[0_0_40px_rgba(59,130,246,0.15)]">
+          <div className="w-full max-w-xl rounded-4xl border border-slate-700 bg-[#0D1628]/90 p-8 backdrop-blur-xl shadow-[0_0_40px_rgba(59,130,246,0.15)]">
             
             {/* Avatar */}
             <div className="flex justify-center mb-6">

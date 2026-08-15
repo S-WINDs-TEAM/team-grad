@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d1526"/>
+      <stop offset="1" stop-color="#060911"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#3b82f6" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="500" fill="url(#sky)"/>
+  <g opacity="0.5" fill="#111a2b">
+    <rect x="30" y="300" width="40" height="150"/>
+    <rect x="80" y="260" width="30" height="190"/>
+    <rect x="120" y="320" width="50" height="130"/>
+    <rect x="700" y="280" width="35" height="170"/>
+    <rect x="745" y="240" width="28" height="210"/>
+    <rect x="785" y="310" width="45" height="140"/>
+    <rect x="840" y="270" width="30" height="180"/>
+  </g>
+  <rect x="0" y="446" width="900" height="6" fill="#161d2c"/>
+  <rect x="0" y="420" width="900" height="26" fill="url(#glow)"/>
+  <g>
+    <rect x="140" y="240" width="420" height="170" rx="8" fill="#0e1420" stroke="#1b2536" stroke-width="2"/>
+    <rect x="140" y="240" width="420" height="170" rx="8" fill="none" stroke="#3b82f6" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="175" y="335" font-family="Arial, sans-serif" font-size="46" font-weight="800" fill="#60a5fa">S</text>
+    <text x="225" y="335" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#e7ebf3">S-WINDs</text>
+  </g>
+  <g>
+    <path d="M560 280 h100 a22 22 0 0 1 21 16 l20 62 a16 16 0 0 1 -16 20 h-125 z" fill="#141b29" stroke="#1b2536" stroke-width="2"/>
+    <rect x="592" y="304" width="56" height="36" rx="4" fill="#080b12" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="2"/>
+    <circle cx="695" cy="368" r="14" fill="#60a5fa" opacity="0.9"/>
+    <circle cx="695" cy="368" r="30" fill="#60a5fa" opacity="0.16"/>
+  </g>
+  <g fill="#04060a" stroke="#1b2536" stroke-width="2">
+    <circle cx="205" cy="412" r="24"/>
+    <circle cx="300" cy="412" r="24"/>
+    <circle cx="500" cy="412" r="24"/>
+    <circle cx="655" cy="412" r="24"/>
+  </g>
+</svg>

@@ -1,47 +1,54 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const waypointSchema = new mongoose.Schema({
-  location: {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true },
+const waypointSchema = new mongoose.Schema(
+  {
+    location: {
+      lat: { type: Number, required: true },
+      lng: { type: Number, required: true },
+    },
+    eta: { type: Date, required: true },
+    distanceFromStart: { type: Number },
+    weather: {
+      temperature: Number,
+      feelslike: Number,
+      windSpeed: Number,
+      windDirection: Number,
+      windGust: Number,
+      precipitation: Number,
+      pop: Number,
+      humidity: Number,
+      pressure: Number,
+      visibility: Number,
+      clouds: Number,
+      uvIndex: Number,
+      dewPoint: Number,
+      condition: String,
+      description: String,
+      icon: String,
+      riskLevel: String,
+    },
+    maxSafeSpeed: { type: Number },
   },
-  eta: { type: Date, required: true },
-  distanceFromStart: { type: Number },
-  weather: {
-    temperature: Number,
-    feelslike: Number,
-    windSpeed: Number,
-    windDirection: Number,
-    windGust: Number,
-    precipitation: Number,
-    pop: Number,
-    humidity: Number,
-    pressure: Number,
-    visibility: Number,
-    clouds: Number,
-    uvIndex: Number,
-    dewPoint: Number,
-    condition: String,
-    description: String,
-    icon: String,
-    riskLevel: String,
-  },
-  maxSafeSpeed: { type: Number },
-}, { _id: false }); //no id for waypoint cause its part from the trip preformunce and data saved
+  { _id: false },
+); //no id for waypoint cause its part from the trip preformunce and data saved
 
-//cause mongoose the mongodb libr is making a ._id field for every unique document in thd db so every new waypoint in the road will take ._id and we dont need it for any search so we disable it 
+//cause mongoose the mongodb libr is making a ._id field for every unique document in thd db so every new waypoint in the road will take ._id and we dont need it for any search so we disable it
 
 const tripSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
-    // tripNumber is a unique sequential number for each trip, useful for tracking and referencing trips without exposing the MongoDB ObjectId.
     tripNumber: {
       type: Number,
       unique: true,
+    },
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FleetVehicle",
+      default: null, // null for individual trips or if trip doesnot linked with vehical
     },
     origin: {
       lat: { type: Number, required: true },
@@ -55,8 +62,8 @@ const tripSchema = new mongoose.Schema(
     },
     vehicleType: {
       type: String,
-      enum: ['car', 'motorcycle', 'truck'],
-      default: 'car',
+      enum: ["car", "motorcycle", "truck"],
+      default: "car",
     },
     departureTime: {
       type: Date,
@@ -68,34 +75,22 @@ const tripSchema = new mongoose.Schema(
     routePolyline: [[Number]],
     overallRiskLevel: {
       type: String,
-      enum: ['low', 'medium', 'high'],
+      enum: ["low", "medium", "high"],
     },
     status: {
       type: String,
-      enum: ['planned', 'active', 'completed'],
-      default: 'planned',
+      enum: ["planned", "active", "completed"],
+      default: "planned",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-// Adding an index to optimize queries that fetch trips for a specific user, sorted by creation date. This is especially useful for displaying a user's trip history in reverse chronological order.
-tripSchema.index({ 
-  userId: 1,
-  createdAt: -1 
-});
-
-const Trip = mongoose.model('Trip', tripSchema);
+tripSchema.index({ userId: 1, createdAt: -1 });
+//dashboard indx one vehicle trips in one day
+tripSchema.index({ vehicleId: 1, departureTime: 1 });
+const Trip = mongoose.model("Trip", tripSchema);
 module.exports = Trip;
-
-
-
-
-
-
-
-
-
 
 //  سيناريوهات الكوارث والـ Debugging
 // الكارثة: ValidationError:waypoints.0.location.latis required.
@@ -119,16 +114,6 @@ module.exports = Trip;
 // لو عايز تضيف "مشاركة الرحلة": هتضيف حقل shareToken جوه الـ Schema، وتعمله index: { unique: true }، عشان لو حد فتح الرابط، نقدر نجيب الرحلة من غير ما نبعت الـ userId.
 
 // لو عايز تتعامل مع مسارات أطول: النقطة الضعيفة هنا هي routePolyline، لو المسافة 1000 كيلو، هتخزن آلاف النقاط. ممكن تضيف ضغط (Compression) أو تقلل عدد النقاط بـ (Simplify) قبل الحفظ.
-
-
-
-
-
-
-
-
-
-
 
 // مشكلة تأثير الرياح على استهلاك الوقود
 // المشكلة حقيقية ومعقدة، لأنها مش مجرد "نوع العربية" (Car/Truck). الفرق بين سيارة انسيابية (نيسان) وجيب مربع (Jeep) في استهلاك الوقود يمكن أن يصل إلى 30% في الطرق السريعة بسبب الرياح المعاكسة.
