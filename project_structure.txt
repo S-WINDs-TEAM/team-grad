@@ -1,0 +1,140 @@
+team-grad-a128b71a32055ceddf4baeded4de2dff6e862e5b
+├── ReadME.md
+├── client
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── favicon.svg
+│   │   ├── icons
+│   │   │   ├── apple-touch-icon.png
+│   │   │   ├── icon-192.png
+│   │   │   ├── icon-512-maskable.png
+│   │   │   └── icon-512.png
+│   │   ├── icons.svg
+│   │   ├── manifest.json
+│   │   └── sw.js
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── api
+│   │   │   ├── adsApi.js
+│   │   │   ├── authApi.js
+│   │   │   ├── axiosInstance.js
+│   │   │   ├── briefingApi.js
+│   │   │   ├── fleetApi.js
+│   │   │   ├── geocodeApi.js
+│   │   │   ├── mockTrackingApi.js
+│   │   │   ├── routeApi.js
+│   │   │   └── weatherApi.js
+│   │   ├── components
+│   │   │   ├── LocationAutocomplete.jsx
+│   │   │   ├── MapView.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   ├── ROICalculator.jsx
+│   │   │   ├── WaypointCard.jsx
+│   │   │   ├── fleet
+│   │   │   │   ├── FleetDashboard.styles.js
+│   │   │   │   ├── FleetMapController.jsx
+│   │   │   │   ├── FleetSidebar.jsx
+│   │   │   │   ├── PlanRouteModal.jsx
+│   │   │   │   └── SlideOutPanel.jsx
+│   │   │   └── routeLoadingSkeleton.jsx
+│   │   ├── hooks
+│   │   │   ├── useAuth.js
+│   │   │   ├── useGeolocation.js
+│   │   │   ├── useLocalWeather.js
+│   │   │   └── useSocket.js
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   ├── pages
+│   │   │   ├── AcceptInvitePage.jsx
+│   │   │   ├── AnalyticsPage.jsx
+│   │   │   ├── BriefingPage.jsx
+│   │   │   ├── DriverTrackingPage.jsx
+│   │   │   ├── FleetDashboardPage.jsx
+│   │   │   ├── HomePage.jsx
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── PlanTripPage.jsx
+│   │   │   ├── RegisterPage.jsx
+│   │   │   └── TripHistoryPage.jsx
+│   │   ├── store
+│   │   │   ├── authSlice.js
+│   │   │   ├── fleetSlice.js
+│   │   │   ├── index.js
+│   │   │   └── tripSlice.js
+│   │   ├── styles
+│   │   │   └── theme.js
+│   │   └── utils
+│   │       ├── fleetColors.js
+│   │       ├── riskColors.js
+│   │       └── riskTranslator.js
+│   └── vite.config.js
+├── project_structure.txt
+└── server
+    ├── package-lock.json
+    ├── package.json
+    ├── src
+    │   ├── app.js
+    │   ├── config
+    │   │   └── db.js
+    │   ├── controllers
+    │   │   ├── adController.js
+    │   │   ├── alertController.js
+    │   │   ├── authController.js
+    │   │   ├── fleetController.js
+    │   │   ├── geocodeController.js
+    │   │   ├── routeController.js
+    │   │   └── weatherController.js
+    │   ├── middlewares
+    │   │   ├── authMiddleware.js
+    │   │   ├── errorMiddleware.js
+    │   │   ├── uploadMiddleware.js
+    │   │   └── validateMIddleware.js
+    │   ├── models
+    │   │   ├── Ad.js
+    │   │   ├── Alert.js
+    │   │   ├── Company.js
+    │   │   ├── FleetVehicle.js
+    │   │   ├── Trip.js
+    │   │   ├── User.js
+    │   │   └── WeatherCache.js
+    │   ├── routes
+    │   │   ├── adRoutes.js
+    │   │   ├── alertRoutes.js
+    │   │   ├── authRoutes.js
+    │   │   ├── briefingRoutes.js
+    │   │   ├── fleetRoutes.js
+    │   │   ├── geocodeRoutes.js
+    │   │   ├── mockTrackingRoutes.js
+    │   │   ├── routeRoutes.js
+    │   │   └── weatherRoutes.js
+    │   ├── server.js
+    │   ├── services
+    │   │   ├── briefingService.js
+    │   │   ├── cargoService.js
+    │   │   ├── fatigueService.js
+    │   │   ├── geocodeService.js
+    │   │   ├── mapService.js
+    │   │   ├── mockTrackingService.js
+    │   │   ├── routPlanningService.js
+    │   │   └── weatherService.js
+    │   ├── socket
+    │   │   └── socketManager.js
+    │   └── utils
+    │       ├── geoUtils.js
+    │       ├── riskEngine.js
+    │       ├── seedAds.js
+    │       ├── validators.js
+    │       ├── vehicleProfiles.js
+    │       └── windPhysics.js
+    └── uploads
+        ├── 1784039917347-930165214.png
+        ├── 1784039931774-101882423.png
+        ├── 1784040004229-211264701.png
+        ├── 1785158077560-674807024.png
+        ├── 1785861461007-924879093.png
+        └── 1785861486405-868038064.png
