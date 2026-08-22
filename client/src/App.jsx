@@ -11,8 +11,8 @@ import TripHistoryPage from './pages/TripHistoryPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import BriefingPage from './pages/BriefingPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import TestPage from './pages/TestPage';
 import { Toaster } from 'react-hot-toast';
-
 function App() {
     return (
         <>
@@ -34,8 +34,7 @@ function App() {
                 <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/history" element={<ProtectedRoute><TripHistoryPage /></ProtectedRoute>} />
                 <Route path="/plan" element={<ProtectedRoute><PlanTripPage /></ProtectedRoute>} />
-
-                {/* Analytics (basic charts for the manager & individual) */}
+                <Route path="/test" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />                {/* Analytics (basic charts for the manager & individual) */}
                 <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                 {/* briefing routes  */}
                 <Route path="/briefing" element={<ProtectedRoute><BriefingPage /></ProtectedRoute>} />

@@ -17,6 +17,8 @@ export const styles = {
         padding: '16px 24px',
         borderBottom: `1px solid ${theme.borderDefault}`,
         flexShrink: 0,
+        position: 'relative',
+        zIndex: 2000,
     },
     logo: {
         display: 'flex',

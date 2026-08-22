@@ -5,6 +5,7 @@ const { encodeGeohash, roundToNearest30Min } = require('../utils/geoUtils');
 const { ALL_CLASSES, LEGACY_MAP } = require('../utils/vehicleProfiles');
 const { calculateCompositeRisk } = require('../utils/riskEngine');
 const weatherCache = require('../models/WeatherCache');
+const { applyHazardOverride } = require('./simulationService');
 
 // small delay used only on cache miss (Open-Meteo free-tier friendliness)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -52,6 +53,9 @@ const computeWaypointsForDeparture = async (rawWaypoints, vehicleType, departure
             await delay(50);
             weather = await getWeatherForLocationAndTime(wp.lat, wp.lng, etaForThisPoint);
         }
+        
+        // DEMO MODE: override weather inside the simulated hazard zone (if active)
+        weather = applyHazardOverride(wp, weather);
 
         // speeds & risks for EVERY vehicle class (5 physical + 3 legacy keys)
         const classes = [...ALL_CLASSES, 'car', 'truck', 'motorcycle'];

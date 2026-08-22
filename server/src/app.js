@@ -28,6 +28,7 @@ const fleetAdminRoutes = require('./routes/fleetAdminRoutes');
 const requestRoutes = require('./routes/requestRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
+
 const app = express();
 
 
@@ -92,7 +93,7 @@ app.use((req, res, next) => {
 // Global API rate limit — 100 req / 15 min per IP on /api/*
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    limit: 10000,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     ipv6Subnet: 56,
@@ -106,8 +107,8 @@ app.use('/api', apiLimiter);
 //    During demo rehearsals you can temporarily raise this to 50 if you
 //    keep re-logging to show different flows.
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 10,
+    windowMs: 1 * 60 * 1000,
+    limit: 1000,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
     ipv6Subnet: 56,
@@ -120,7 +121,6 @@ app.use('/api/auth/register-company', authLimiter);
 
 // serves uploaded profile/vehicle photos, e.g. GET /uploads/171234-abc.jpg — see uploadMiddleware.js
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
 
 //endpoints routes here:
 app.use('/api/auth', authRoutes);
@@ -136,6 +136,7 @@ app.use('/api/fleet-admin', fleetAdminRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/chat', chatRoutes);
 
+app.use('/api/test', require('./routes/testRoutes'));
 app.get('/', (req, res) => {
   res.status(200).json({ msg: "wind api is ruunnig" });
 

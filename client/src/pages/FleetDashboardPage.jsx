@@ -20,7 +20,8 @@ import { planRouteApi, getTripByIdApi } from '../api/routeApi';
 import { startMockTrackingApi, stopMockTrackingApi } from '../api/mockTrackingApi';
 import { setVehicles, upsertVehicle } from '../store/fleetSlice';
 import { theme } from '../styles/theme';
-
+import NotificationCenter from '../components/fleet/NotificationCenter';
+import ChatPanel from '../components/fleet/ChatPanel';
 import FleetSidebar from '../components/fleet/FleetSidebar';
 import FleetMapController from '../components/fleet/FleetMapController';
 import SlideOutPanel from '../components/fleet/SlideOutPanel';
@@ -58,7 +59,7 @@ const FleetDashboardPage = () => {
     const [newVehicle, setNewVehicle] = useState({ plateNumber: '', vehicleType: 'truck', driverId: '' });
     const [newDriver, setNewDriver] = useState({ name: '', email: '' });
     const [mockRunning, setMockRunning] = useState(false);
-
+    const [topPanel, setTopPanel] = useState(null); // 'notifications' | 'chat' | null
     // Invite link modal state
     const [inviteLink, setInviteLink] = useState(null);
 
@@ -429,6 +430,14 @@ const FleetDashboardPage = () => {
                 </nav>
 
                 <div style={styles.headerRight}>
+                    <NotificationCenter
+                        open={topPanel === 'notifications'}
+                        onOpenChange={(v) => setTopPanel(v ? 'notifications' : null)}
+                    />
+                    <ChatPanel
+                        open={topPanel === 'chat'}
+                        onOpenChange={(v) => setTopPanel(v ? 'chat' : null)}
+                    />
                     <span style={styles.userName}>{user?.name} · Admin</span>
                     <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
                 </div>
