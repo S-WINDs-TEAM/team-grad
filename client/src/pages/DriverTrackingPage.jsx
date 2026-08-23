@@ -274,7 +274,14 @@ const DriverTrackingPage = () => {
                         )}
                     </>
                 )}
-
+                    {trip?.cargoAlerts?.length > 0 && (
+                    <div style={styles.cargoBox}>
+                        <div style={styles.cargoTitle}>Cargo advisories for this trip</div>
+                        {trip.cargoAlerts.map((a, i) => (
+                            <div key={i} style={styles.cargoItem}>{a.message}</div>
+                        ))}
+                    </div>
+                    )}
                 {vehicle && !trip && !loading && (
                     <div style={styles.noTripCard}>
                         <p style={styles.noVehicleText}>No trip assigned for today.</p>
@@ -426,6 +433,9 @@ const styles = {
     chatForm: { display: 'flex', gap: '8px' },
     chatInput: { flex: 1, padding: '10px 12px', background: theme.bgTertiary, border: `1px solid ${theme.borderDefault}`, borderRadius: '10px', color: theme.textPrimary, fontSize: '13px', outline: 'none' },
     chatSend: { padding: '10px 14px', background: theme.accentBlue, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
+    cargoBox: { background: 'rgba(245,158,11,0.08)', border: `1px solid ${theme.accentOrange}`, borderRadius: '10px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' },
+    cargoTitle: { fontSize: '13px', fontWeight: '700', color: theme.accentOrange },
+    cargoItem: { fontSize: '12px', color: theme.textPrimary, lineHeight: 1.6 },
 };
 
 export default DriverTrackingPage;

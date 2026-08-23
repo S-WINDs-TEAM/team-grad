@@ -2,7 +2,7 @@ const express = require('express');
 const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const {
     createBreakRequest, createRouteRequest, createTripRequest,
-    decideRequest, getInbox, getUnreadCount, markRead,
+    decideRequest, getInbox, getUnreadCount, markRead, markAllRead,
 } = require('../controllers/requestController');
 const router = express.Router();
 
@@ -15,5 +15,5 @@ router.get('/inbox', getInbox);
 router.get('/unread-count', getUnreadCount);
 router.patch('/:id/read', markRead);
 router.patch('/:id/decide', restrictTo('company_admin'), decideRequest);
-
+router.patch('/read-all', markAllRead);
 module.exports = router;

@@ -2,7 +2,7 @@ const User = require('../models/User');
 const FleetVehicle = require('../models/FleetVehicle');
 const Trip = require('../models/Trip');
 const { getIO } = require('../socket/socketManager');
-
+const Notification = require('../models/Notification');
 // company_admin invites a driver by email. no password is set here —
 // the driver gets a link and sets their own password (see auth invite/accept endpoints).
 const inviteDriver = async (req, res, next) => {
@@ -159,6 +159,26 @@ const sendAlert = async (req, res, next) => {
             targetDriverIds: driverIds,
             sentAt: new Date(),
         });
+             // FIXED: deliver to each target driver's OWN room (they are not in the
+     // company room) + persist as a notification so it never gets lost.
+     for (const dId of driverIds) {
+         io.to(`driver:${dId}`).emit('driver:alert', {
+             message,
+             alertType: alertType || 'general',
+             targetDriverIds: driverIds,
+             sentAt: new Date(),
+         });
+         await Notification.create({
+             companyId,
+             recipientId: dId,
+             senderId: req.user._id,
+             category: 'dispatch',
+             title: alertType || 'general',
+             message,
+             status: 'info',
+             actionRequired: false,
+         });
+     }
 
         res.status(200).json({
             success: true,

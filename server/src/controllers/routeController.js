@@ -1,14 +1,16 @@
 const Trip = require('../models/Trip');
 const FleetVehicle = require('../models/FleetVehicle');
+const User = require('../models/User');
 const { getRouteAndWaypoints, computeWaypointsForDeparture } = require('../services/routPlanningService');
 const { calculateLocalAlternate } = require('../services/mapService');
 const Alert = require('../models/Alert');
 const { getIO } = require('../socket/socketManager');
 const { evaluateFatigue } = require('../services/fatigueService');
 const { checkCargo } = require('../services/cargoService');
+const { notify } = require('../services/notificationService');
 
 // ================================================================
-// Plan Route (Unit 1 risk engine fields + Unit 2 cargo & fatigue)
+// Plan Route (Unit 1/2 fields + alternate route + manager notification)
 // ================================================================
 const planRoute = async (req, res, next) => {
     try {
@@ -21,7 +23,7 @@ const planRoute = async (req, res, next) => {
         const { waypointsWithWeather, fullWaypoints, overallRisk, totalDurationMin } =
             await computeWaypointsForDeparture(rawWaypoints, vType, departure);
 
-        // Unit 2: Cargo sensitivity — scan all waypoints, one alert per risk type
+        // Unit 2: Cargo sensitivity — one alert per risk type
         const cargo = cargoType || 'general';
         const cargoAlerts = [];
         const seenAlerts = new Set();
@@ -42,12 +44,11 @@ const planRoute = async (req, res, next) => {
         }
         const fatigueInfo = await evaluateFatigue(driverIdForFatigue, totalDurationMin);
 
-        // Unit 1/2: overall composite score = average of waypoint scores
+        // Overall composite score = average of waypoint scores
         const riskScore = Math.round(
             fullWaypoints.reduce((s, w) => s + (w.riskScore || 0), 0) / (fullWaypoints.length || 1)
         );
 
-        // Store full 5km waypoints + all Unit 1/2 fields
         const trip = await Trip.create({
             userId: req.user._id,
             vehicleId: vehicleId || null,
@@ -103,6 +104,16 @@ const planRoute = async (req, res, next) => {
                 wp => wp.location.lat === highRiskWaypoint.location.lat &&
                       wp.location.lng === highRiskWaypoint.location.lng
             );
+            // Context so the manager knows WHICH vehicle/driver/route instantly
+            let ctxVehicle = null;
+            if (vehicleIdForAlert) {
+                ctxVehicle = await FleetVehicle.findById(vehicleIdForAlert).populate('driverId', 'name');
+            }
+            const context = {
+                plateNumber: ctxVehicle?.plateNumber || null,
+                driverName: ctxVehicle?.driverId?.name || req.user.name,
+                routeLine: `${origin.address || 'Origin'} → ${destination.address || 'Destination'}`,
+            };
 
             const alert = await Alert.create({
                 companyId: req.user.companyId || null,
@@ -116,6 +127,8 @@ const planRoute = async (req, res, next) => {
                     lat: highRiskWaypoint.location.lat,
                     lng: highRiskWaypoint.location.lng,
                     waypointIndex,
+                    tripId: trip._id,
+                    context,     
                     currentRoute: currentRouteSummary,
                     proposedRoute: proposedRouteSummary,
                     difference: { timeSavedMin: timeSaved, distanceSavedKm: distanceDiff },
@@ -145,9 +158,31 @@ const planRoute = async (req, res, next) => {
                 }
                 io.to(`driver:${req.user._id}`).emit('driver:alert', alert);
             }
+
+            // FIXED (كان خارج الـ if فبيكرش على الرحلات الآمنة):
+            // Fleet trips → actionable notification for the manager, so they can
+            // switch the trip to the alternate from the bell.
+            if (req.user.companyId) {
+                const managers = await User.find({ role: 'company_admin', companyId: req.user.companyId }).select('_id');
+                for (const m of managers) {
+                    await notify({
+                        companyId: req.user.companyId,
+                        recipientId: m._id,
+                        senderId: req.user._id,
+                        category: 'route_request',
+                        title: 'Hazard on planned route',
+                        message: `Weather hazard near KM ${Math.round(highRiskWaypoint.distanceFromStart)}. Alternate route saves ${timeSaved} min (${distanceDiff > 0 ? '+' : ''}${distanceDiff} km).`,
+                        relatedModel: 'Trip',
+                        relatedId: trip._id,
+                        status: 'pending',
+                        actionRequired: true,
+                        metadata: { tripId: trip._id, alternateRoute: alternateRouteData, reason: 'auto-detected hazard' },
+                    });
+                }
+            }
         }
 
-        // Response (30km display + 5km full + Unit 2 fields for the warnings box)
+        // Response (30km display + 5km full + Unit 2 fields)
         const response = {
             success: true,
             trip: {
@@ -248,10 +283,7 @@ const getTripHistory = async (req, res, next) => {
 
         let filter = {};
         if (req.user.role === 'company_admin' && req.user.companyId) {
-            // Manager sees his own trips + all company vehicle trips
-            const vehicles = await FleetVehicle.find({ companyId: req.user.companyId })
-                .select('_id')
-                .lean();
+            const vehicles = await FleetVehicle.find({ companyId: req.user.companyId }).select('_id').lean();
             const vehicleIds = vehicles.map(v => v._id);
             filter = {
                 $or: [
@@ -297,9 +329,7 @@ const getTripById = async (req, res, next) => {
         let query;
 
         if (req.user.role === 'company_admin' && req.user.companyId) {
-            const vehicles = await FleetVehicle.find({ companyId: req.user.companyId })
-                .select('_id')
-                .lean();
+            const vehicles = await FleetVehicle.find({ companyId: req.user.companyId }).select('_id').lean();
             const vehicleIds = vehicles.map(v => v._id);
             query = {
                 _id: tripId,

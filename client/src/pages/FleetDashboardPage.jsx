@@ -62,7 +62,7 @@ const FleetDashboardPage = () => {
     const [topPanel, setTopPanel] = useState(null); // 'notifications' | 'chat' | null
     // Invite link modal state
     const [inviteLink, setInviteLink] = useState(null);
-
+    
     // Layer controls
     const [showRoutes, setShowRoutes] = useState(true);
     const [showLive, setShowLive] = useState(true);
@@ -82,7 +82,8 @@ const FleetDashboardPage = () => {
     const [planDestination, setPlanDestination] = useState(null);
     const [planDepartureTime, setPlanDepartureTime] = useState('');
     const [planning, setPlanning] = useState(false);
-
+    const [planCargoType, setPlanCargoType] = useState('general');
+    const [planVehicleType, setPlanVehicleType] = useState('car');
     const vehiclePhotoInputRef = useRef(null);
     const [photoTargetVehicleId, setPhotoTargetVehicleId] = useState(null);
 
@@ -273,7 +274,7 @@ const FleetDashboardPage = () => {
             await sendAlertApi({ vehicleIds: selectedVehicleIds, message: alertMessage, alertType });
             toast.success(`alert sent to ${selectedVehicleIds.length} vehicle(s)`);
             setAlertMessage('');
-            setSelectedVehicleIds([]);
+            // setSelectedVehicleIds([]);
         } catch (err) {
             toast.error(err.response?.data?.msg || 'could not send alert');
         } finally {
@@ -362,6 +363,9 @@ const FleetDashboardPage = () => {
         const now = new Date();
         now.setHours(now.getHours() + 2);
         setPlanDepartureTime(now.toISOString().slice(0, 16));
+        const veh = mergedFleetData.find(v => v._id === vehicleId);
+        setPlanVehicleType(veh?.vehicleType || 'car');
+        setPlanCargoType('general');
         setShowPlanModal(true);
     };
 
@@ -385,10 +389,11 @@ const FleetDashboardPage = () => {
         }
         setPlanning(true);
         try {
-            const payload = {
+                const payload = {
                 origin: planOrigin,
                 destination: planDestination,
-                vehicleType: 'car',
+                vehicleType: planVehicleType,
+                cargoType: planCargoType,
                 departureTime: new Date(planDepartureTime).toISOString(),
                 vehicleId: planVehicleId,
             };
@@ -640,6 +645,8 @@ const FleetDashboardPage = () => {
                 show={showPlanModal}
                 onClose={closePlanModal}
                 vehiclePlate={planVehiclePlate}
+                cargoType={planCargoType}
+                setCargoType={setPlanCargoType}
                 origin={planOrigin}
                 setOrigin={setPlanOrigin}
                 destination={planDestination}

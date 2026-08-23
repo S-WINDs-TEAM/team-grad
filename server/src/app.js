@@ -99,7 +99,9 @@ const apiLimiter = rateLimit({
     ipv6Subnet: 56,
     message: { success: false, msg: 'too many requests, please slow down' },
 });
-app.use('/api', apiLimiter);
+// 23 8 2026
+
+// app.use('/api', apiLimiter);
 
 
 // 6) Strict brute-force limiter on auth endpoints — 10 attempts / 15 min.
@@ -115,9 +117,10 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,  // successful logins don't count against the quota
     message: { success: false, msg: 'too many login attempts, please try again after 15 minutes' },
 });
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth/register-company', authLimiter);
+//23 8 2026 STOP LIMITER
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
+// app.use('/api/auth/register-company', authLimiter);
 
 // serves uploaded profile/vehicle photos, e.g. GET /uploads/171234-abc.jpg — see uploadMiddleware.js
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));

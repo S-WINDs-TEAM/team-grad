@@ -133,6 +133,20 @@ const FleetMapController = ({
             });
         }
 
+                // FIXED: when the Routes layer is hidden, still draw the SELECTED
+        // vehicle's route so its waypoints never look like disconnected dots.
+        if (!showRoutes && selectedVehicleId) {
+            const selectedItem = mergedFleetData.find(item => item._id === selectedVehicleId);
+            const selTrip = selectedItem?.todayTrip;
+            if (selTrip && selTrip.routePolyline && selTrip.routePolyline.length > 0) {
+                const riskColor = getRiskPathColor(selTrip.overallRiskLevel);
+                const positions = selTrip.routePolyline.map(coord => [coord[0], coord[1]]);
+                const polyline = L.polyline(positions, {
+                    color: riskColor, weight: 6, opacity: 1, lineJoin: 'round',
+                }).addTo(map);
+                newRoutes.push(polyline);
+            }
+        }
         // 
         // 2. Draw Live Markers
         // 

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { getIO } = require('../socket/socketManager');
 const { notify } = require('../services/notificationService');
 const { NOTIF_CATEGORY, NOTIF_STATUS, BREAK_AUTO_APPROVE_MIN, DEFAULT_BREAK_MIN } = require('../utils/fleetConstants');
+const { calculateLocalAlternate } = require('../services/mapService');
 
 // Helper: find the managers of a company to receive a request.
 const getCompanyManagers = async (companyId) => {
@@ -31,6 +32,13 @@ const createBreakRequest = async (req, res, next) => {
                 autoApproveInMin: BREAK_AUTO_APPROVE_MIN,
                 metadata: { durationMin, note },
             });
+
+            const tripDoc = await Trip.findById(tripId).select('origin destination vehicleId').populate({ path: 'vehicleId', select: 'plateNumber' });
+            const context = {
+            plateNumber: tripDoc?.vehicleId?.plateNumber || null,
+            driverName: req.user.name,
+            routeLine: `${tripDoc?.origin?.address || 'Origin'} → ${tripDoc?.destination?.address || 'Destination'}`,
+        };
             created.push(notif);
         }
         res.status(201).json({ success: true, msg: 'break request sent', requests: created });
@@ -46,8 +54,32 @@ const createRouteRequest = async (req, res, next) => {
         if (!tripId) {
             return res.status(400).json({ success: false, msg: 'tripId is required' });
         }
-
         const managers = await getCompanyManagers(req.user.companyId);
+
+                // FIXED: if the driver didn't send a computed alternate, calculate one
+        // server-side around the most dangerous waypoint so the manager's
+        // approval has a REAL route to switch to.
+        let alt = alternateRoute;
+        if (!alt) {
+            const tripDoc = await Trip.findById(tripId).lean();
+            const wps = tripDoc?.waypoints || [];
+            const danger = wps.find(w => w.weather?.riskLevel === 'high') ||
+                (wps.length ? wps.reduce((max, w) => ((w.riskScore || 0) > (max.riskScore || 0) ? w : max), wps[0]) : null);
+            if (tripDoc && danger) {
+                const computed = await calculateLocalAlternate(
+                    tripDoc.origin, tripDoc.destination,
+                    { lat: danger.location.lat, lng: danger.location.lng }, 10
+                );
+                alt = {
+                    polyline: computed.polyline,
+                    waypoints: computed.coordinates.map(([lng, lat]) => ({ location: { lat, lng } })),
+                    totalDistanceKm: computed.distanceKm,
+                    totalDurationMin: computed.durationMin,
+                    overallRiskLevel: 'low',
+                };
+            }
+        }
+
         if (!managers.length) return res.status(404).json({ success: false, msg: 'no manager found for your company' });
 
         const created = [];
@@ -63,7 +95,7 @@ const createRouteRequest = async (req, res, next) => {
                 relatedId: tripId,
                 status: NOTIF_STATUS.PENDING,
                 actionRequired: true,
-                metadata: { tripId, alternateRoute, reason },
+                metadata: { tripId, alternateRoute: alt, reason },
             });
             created.push(notif);
         }
@@ -226,7 +258,18 @@ const markRead = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+// Mark ALL notifications as read (called when the bell is opened).
+const markAllRead = async (req, res, next) => {
+    try {
+        const q = req.user.role === 'company_admin'
+            ? { companyId: req.user.companyId, read: false }
+            : { recipientId: req.user._id, read: false };
+        await Notification.updateMany(q, { read: true });
+        res.status(200).json({ success: true });
+    } catch (err) { next(err); }
+};
+
 module.exports = {
     createBreakRequest, createRouteRequest, createTripRequest,
-    decideRequest, getInbox, getUnreadCount, markRead,
+    decideRequest, getInbox, getUnreadCount, markRead, markAllRead,
 };

@@ -14,6 +14,8 @@ const applyHazardOverride = (waypoint, weather) => {
     if (km >= hazardZone.fromKm && km <= hazardZone.toKm) {
         return {
             ...weather,
+            temperature: 41,
+            feelslike: 44,
             windSpeed: 75,
             windGust: 90,
             visibility: 0.15,

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Bell, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getInboxApi, getUnreadCountApi, decideRequestApi, markReadApi } from '../../api/requestApi';
+import { getInboxApi, getUnreadCountApi, decideRequestApi, markReadApi, markAllReadApi } from '../../api/requestApi';
 import { theme } from '../../styles/theme';
 
 const CHIPS = [
@@ -18,8 +18,8 @@ const statusColor = (status) => {
     return theme.textMuted;
 };
 
-const NotificationCenter = () => {
-    const [open, setOpen] = useState(false);
+const NotificationCenter = ({ open, onOpenChange }) => {
+    // const [open, setOpen] = useState(false);
     const [unread, setUnread] = useState({ total: 0, categories: {} });
     const [items, setItems] = useState([]);
     const [filter, setFilter] = useState('all');
@@ -41,6 +41,12 @@ const NotificationCenter = () => {
         const t = setInterval(refresh, 8000);
         return () => clearInterval(t);
     }, [refresh]);
+
+    useEffect(() => {
+        if (open) {
+            markAllReadApi().then(refresh).catch(() => {});
+        }
+    }, [open, refresh]);
 
     const decide = async (id, decision) => {
         setBusyId(id);
@@ -66,7 +72,7 @@ const NotificationCenter = () => {
 
     return (
         <div style={styles.wrap}>
-            <button style={styles.bellBtn} onClick={() => setOpen((o) => !o)} title="Notifications">
+            <button style={styles.bellBtn} onClick={() => onOpenChange(!open)} title="Notifications">
                 <Bell size={18} />
                 {unread.total > 0 && <span style={styles.badge}>{unread.total}</span>}
             </button>
@@ -75,7 +81,7 @@ const NotificationCenter = () => {
                 <div style={styles.panel}>
                     <div style={styles.panelHeader}>
                         <span style={styles.panelTitle}>Notifications</span>
-                        <button style={styles.closeBtn} onClick={() => setOpen(false)}><X size={14} /></button>
+                        <button style={styles.closeBtn} onClick={() => onOpenChange(false)}><X size={14} /></button>
                     </div>
 
                     <div style={styles.chipsRow}>

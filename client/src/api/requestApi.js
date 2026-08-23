@@ -7,6 +7,7 @@ const getInboxApi = (params) => axiosInstance.get('/requests/inbox', { params })
 const getUnreadCountApi = () => axiosInstance.get('/requests/unread-count');
 const decideRequestApi = (id, data) => axiosInstance.patch(`/requests/${id}/decide`, data);
 const markReadApi = (id) => axiosInstance.patch(`/requests/${id}/read`);
+const markAllReadApi = () => axiosInstance.patch('/requests/read-all');
 export {
     createBreakRequestApi,
     createRouteRequestApi,
@@ -15,4 +16,5 @@ export {
     getUnreadCountApi,
     decideRequestApi,
     markReadApi,
+    markAllReadApi,
 };

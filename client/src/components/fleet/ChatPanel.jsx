@@ -3,8 +3,8 @@ import { MessageSquare, Send, X, ArrowLeft } from 'lucide-react';
 import { getThreadsApi, getThreadApi, sendChatApi } from '../../api/chatApi';
 import { theme } from '../../styles/theme';
 
-const ChatPanel = () => {
-    const [open, setOpen] = useState(false);
+const ChatPanel = ({ open, onOpenChange }) => {
+    // const [open, setOpen] = useState(false);
     const [threads, setThreads] = useState([]);
     const [selectedDriver, setSelectedDriver] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -66,7 +66,7 @@ const ChatPanel = () => {
 
     return (
         <div style={styles.wrap}>
-            <button style={styles.chatBtn} onClick={() => setOpen((o) => !o)} title="Messages">
+            <button style={styles.chatBtn} onClick={() => onOpenChange(!open)} title="Messages">
                 <MessageSquare size={18} />
                 {totalUnread > 0 && <span style={styles.badge}>{totalUnread}</span>}
             </button>
@@ -81,7 +81,7 @@ const ChatPanel = () => {
                         ) : (
                             <span style={styles.panelTitle}>Messages</span>
                         )}
-                        <button style={styles.closeBtn} onClick={() => setOpen(false)}><X size={14} /></button>
+                        <button style={styles.closeBtn} onClick={() => onOpenChange(false)}><X size={14} /></button>
                     </div>
 
                     {!selectedDriver ? (
