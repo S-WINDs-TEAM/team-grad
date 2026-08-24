@@ -19,6 +19,8 @@ const TripHistoryPage = () => {
         const response = await getHistoryApi();
         setTrips(response.data.trips);
       } catch (err) {
+        console.log("error happened: ", err);
+
         toast.error("Could not load trip history");
       } finally {
         setLoading(false);
