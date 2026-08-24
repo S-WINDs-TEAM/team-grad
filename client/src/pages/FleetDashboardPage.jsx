@@ -15,6 +15,7 @@ import {
     uploadVehiclePhotoApi,
     getFleetStatusApi,
     assignDriverApi,
+    approveAlternateApi,
 } from '../api/fleetApi';
 import { planRouteApi, getTripByIdApi } from '../api/routeApi';
 import { startMockTrackingApi, stopMockTrackingApi } from '../api/mockTrackingApi';
@@ -62,6 +63,9 @@ const FleetDashboardPage = () => {
     const [topPanel, setTopPanel] = useState(null); // 'notifications' | 'chat' | null
     // Invite link modal state
     const [inviteLink, setInviteLink] = useState(null);
+    // Hazard focus + alternate preview
+    const [hazardFocus, setHazardFocus] = useState(null);
+    const [alternatePreview, setAlternatePreview] = useState(null);
     
     // Layer controls
     const [showRoutes, setShowRoutes] = useState(true);
@@ -92,22 +96,24 @@ const FleetDashboardPage = () => {
         if (user && user.role !== 'company_admin') navigate('/home');
     }, [user, navigate]);
 
+    // FIXED: extracted so it can be called after actions (approve/apply/etc.)
+    const refreshDashboard = async () => {
+        try {
+            setLoadingDashboard(true);
+            const dashboardRes = await getFleetDashboardApi();
+            setFleetWithTrips(dashboardRes.data.fleet);
+            const statusRes = await getFleetStatusApi();
+            dispatch(setVehicles(statusRes.data.vehicles));
+        } catch (err) {
+            toast.error('Could not load fleet data');
+        } finally {
+            setLoadingDashboard(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoadingDashboard(true);
-                const dashboardRes = await getFleetDashboardApi();
-                setFleetWithTrips(dashboardRes.data.fleet);
-                const statusRes = await getFleetStatusApi();
-                dispatch(setVehicles(statusRes.data.vehicles));
-            } catch (err) {
-                toast.error('Could not load fleet data');
-            } finally {
-                setLoadingDashboard(false);
-            }
-        };
         if (user?.role === 'company_admin') {
-            fetchData();
+            refreshDashboard();
             fetchDrivers();
         }
     }, [dispatch, user]);
@@ -274,7 +280,7 @@ const FleetDashboardPage = () => {
             await sendAlertApi({ vehicleIds: selectedVehicleIds, message: alertMessage, alertType });
             toast.success(`alert sent to ${selectedVehicleIds.length} vehicle(s)`);
             setAlertMessage('');
-            // setSelectedVehicleIds([]);
+            // FIXED: removed setSelectedVehicleIds([]) — selection persists
         } catch (err) {
             toast.error(err.response?.data?.msg || 'could not send alert');
         } finally {
@@ -325,6 +331,38 @@ const FleetDashboardPage = () => {
             document.execCommand('copy');
             document.body.removeChild(ta);
             toast.success('invite link copied');
+        }
+    };
+
+    // Click a hazard alert → select vehicle + zoom to hazard + preview alternate
+    const handleAlertClick = (alert) => {
+        if (alert.vehicleId && selectedVehicleId !== alert.vehicleId) {
+            handleVehicleSelect(alert.vehicleId);
+        }
+        if (alert.details?.lat) {
+            setHazardFocus({ lat: alert.details.lat, lng: alert.details.lng });
+        }
+        if (alert.details?.proposedRoute?.polyline?.length) {
+            setAlternatePreview({
+                alertId: alert._id,
+                polyline: alert.details.proposedRoute.polyline,
+                distanceKm: alert.details.proposedRoute.distanceKm,
+                durationMin: alert.details.proposedRoute.durationMin,
+                timeSaved: alert.details.difference?.timeSavedMin || 0,
+            });
+        }
+    };
+
+    // Apply the alternate route for real
+    const handleApplyAlternate = async () => {
+        try {
+            await approveAlternateApi(alternatePreview.alertId);
+            toast.success('alternate route applied — trip updated');
+            setAlternatePreview(null);
+            setHazardFocus(null);
+            refreshDashboard();
+        } catch (e) {
+            toast.error(e.response?.data?.msg || 'could not apply alternate');
         }
     };
 
@@ -400,10 +438,7 @@ const FleetDashboardPage = () => {
             await planRouteApi(payload);
             toast.success(`Route planned for ${planVehiclePlate}!`);
             closePlanModal();
-            const dashboardRes = await getFleetDashboardApi();
-            setFleetWithTrips(dashboardRes.data.fleet);
-            const statusRes = await getFleetStatusApi();
-            dispatch(setVehicles(statusRes.data.vehicles));
+            refreshDashboard();
         } catch (err) {
             toast.error(err.response?.data?.msg || 'Failed to plan route');
         } finally {
@@ -438,6 +473,7 @@ const FleetDashboardPage = () => {
                     <NotificationCenter
                         open={topPanel === 'notifications'}
                         onOpenChange={(v) => setTopPanel(v ? 'notifications' : null)}
+                        onDataChanged={refreshDashboard}
                     />
                     <ChatPanel
                         open={topPanel === 'chat'}
@@ -584,6 +620,20 @@ const FleetDashboardPage = () => {
                                 </button>
                             </div>
 
+                            {/* Alternate route preview card */}
+                            {alternatePreview && (
+                                <div style={local.altPreviewCard}>
+                                    <div style={local.altPreviewTitle}>Alternate route ready</div>
+                                    <div style={local.altPreviewMeta}>
+                                        {alternatePreview.distanceKm?.toFixed(1)} km · {Math.round(alternatePreview.durationMin)} min · saves {alternatePreview.timeSaved} min
+                                    </div>
+                                    <div style={local.altPreviewActions}>
+                                        <button style={local.applyBtn} onClick={handleApplyAlternate}>Apply alternate</button>
+                                        <button style={local.dismissBtn} onClick={() => setAlternatePreview(null)}>Dismiss</button>
+                                    </div>
+                                </div>
+                            )}
+
                             <FleetMapController
                                 mergedFleetData={mergedFleetData}
                                 vehiclesWithLocation={vehiclesWithLocation}
@@ -594,6 +644,8 @@ const FleetDashboardPage = () => {
                                 selectedVehicleId={selectedVehicleId}
                                 selectedWaypointIndex={selectedWaypointIndex}
                                 onWaypointClick={handleWaypointClick}
+                                hazardFocus={hazardFocus}
+                                alternatePreview={alternatePreview}
                             />
                         </MapContainer>
                     )}
@@ -630,8 +682,23 @@ const FleetDashboardPage = () => {
                     <div style={styles.alertHistory}>
                         {alerts.length === 0 && <p style={styles.emptyText}>No alerts sent yet.</p>}
                         {alerts.map((a, i) => (
-                            <div key={i} style={styles.alertHistoryItem}>
+                            <div
+                                key={i}
+                                style={{
+                                    ...styles.alertHistoryItem,
+                                    cursor: a.details?.lat ? 'pointer' : 'default',
+                                    borderColor: a.details?.lat ? theme.accentOrange : styles.alertHistoryItem.borderColor,
+                                }}
+                                onClick={() => a.details?.lat && handleAlertClick(a)}
+                                title={a.details?.lat ? 'Click to locate hazard on map' : ''}
+                            >
                                 <div style={styles.alertHistoryMsg}>{a.message}</div>
+                                {a.details?.context && (
+                                    <div style={local.alertContext}>
+                                        {a.details.context.plateNumber ? `${a.details.context.plateNumber} · ` : ''}
+                                        {a.details.context.driverName} · {a.details.context.routeLine}
+                                    </div>
+                                )}
                                 <div style={styles.alertHistoryMeta}>
                                     {a.alertType} · {a.targetDriverIds?.length || 0} driver(s) · {new Date(a.sentAt).toLocaleTimeString()}
                                 </div>
@@ -686,6 +753,17 @@ const FleetDashboardPage = () => {
             )}
         </div>
     );
+};
+
+// Local styles for the new floating pieces
+const local = {
+    altPreviewCard: { position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 1500, background: 'rgba(13,19,33,0.95)', border: `1px solid ${theme.accentOrange}`, borderRadius: '12px', padding: '14px 16px', boxShadow: '0 12px 32px rgba(0,0,0,0.5)', width: '320px' },
+    altPreviewTitle: { fontSize: '13px', fontWeight: '700', color: theme.accentOrange, marginBottom: '6px' },
+    altPreviewMeta: { fontSize: '12px', color: theme.textSecondary, marginBottom: '10px' },
+    altPreviewActions: { display: 'flex', gap: '8px' },
+    applyBtn: { flex: 1, padding: '9px', background: theme.accentOrange, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' },
+    dismissBtn: { flex: 1, padding: '9px', background: 'transparent', border: `1px solid ${theme.borderDefault}`, color: theme.textSecondary, borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' },
+    alertContext: { fontSize: '11px', color: theme.accentBlue, marginTop: '4px', fontWeight: '600' },
 };
 
 export default FleetDashboardPage;

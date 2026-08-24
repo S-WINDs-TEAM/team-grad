@@ -61,7 +61,7 @@ const DriverTrackingPage = () => {
         if (user?.role === 'company_driver') load();
     }, [user]);
 
-    // Poll inbox + chat thread (socket push can replace this later)
+    // Poll inbox + chat thread + trip (so route switches appear within 8s)
     useEffect(() => {
         const load = async () => {
             try {
@@ -71,6 +71,8 @@ const DriverTrackingPage = () => {
                 ]);
                 setNotifications(inboxRes.data.notifications || []);
                 setMessages(threadRes.data.messages || []);
+                const tRes = await getMyTripApi();
+                setTrip(tRes.data.trip || null);
             } catch (err) { /* silent */ }
         };
         if (user?.role === 'company_driver') {
@@ -272,16 +274,19 @@ const DriverTrackingPage = () => {
                                 A high-risk weather point was detected on your route. You can request an alternate path.
                             </div>
                         )}
+
+                        {/* Cargo advisories - INSIDE the trip block */}
+                        {trip?.cargoAlerts?.length > 0 && (
+                            <div style={styles.cargoBox}>
+                                <div style={styles.cargoTitle}>Cargo advisories for this trip</div>
+                                {trip.cargoAlerts.map((a, i) => (
+                                    <div key={i} style={styles.cargoItem}>{a.message}</div>
+                                ))}
+                            </div>
+                        )}
                     </>
                 )}
-                    {trip?.cargoAlerts?.length > 0 && (
-                    <div style={styles.cargoBox}>
-                        <div style={styles.cargoTitle}>Cargo advisories for this trip</div>
-                        {trip.cargoAlerts.map((a, i) => (
-                            <div key={i} style={styles.cargoItem}>{a.message}</div>
-                        ))}
-                    </div>
-                    )}
+
                 {vehicle && !trip && !loading && (
                     <div style={styles.noTripCard}>
                         <p style={styles.noVehicleText}>No trip assigned for today.</p>
@@ -410,6 +415,9 @@ const styles = {
     tripRouteLine: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: theme.textPrimary, flexWrap: 'wrap' },
     tripMeta: { display: 'flex', gap: '16px', fontSize: '12px', color: theme.textSecondary },
     hazardNote: { fontSize: '13px', color: theme.accentOrange, background: 'rgba(245,158,11,0.1)', border: `1px solid ${theme.accentOrange}`, borderRadius: '10px', padding: '10px 14px' },
+    cargoBox: { background: 'rgba(245,158,11,0.08)', border: `1px solid ${theme.accentOrange}`, borderRadius: '10px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' },
+    cargoTitle: { fontSize: '13px', fontWeight: '700', color: theme.accentOrange },
+    cargoItem: { fontSize: '12px', color: theme.textPrimary, lineHeight: 1.6 },
     actionsRow: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
     startBtn: { flex: 1, minWidth: '200px', padding: '14px', background: theme.accentGreen, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
     stopBtn: { flex: 1, minWidth: '200px', padding: '14px', background: theme.accentRed, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' },
@@ -433,9 +441,6 @@ const styles = {
     chatForm: { display: 'flex', gap: '8px' },
     chatInput: { flex: 1, padding: '10px 12px', background: theme.bgTertiary, border: `1px solid ${theme.borderDefault}`, borderRadius: '10px', color: theme.textPrimary, fontSize: '13px', outline: 'none' },
     chatSend: { padding: '10px 14px', background: theme.accentBlue, color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    cargoBox: { background: 'rgba(245,158,11,0.08)', border: `1px solid ${theme.accentOrange}`, borderRadius: '10px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' },
-    cargoTitle: { fontSize: '13px', fontWeight: '700', color: theme.accentOrange },
-    cargoItem: { fontSize: '12px', color: theme.textPrimary, lineHeight: 1.6 },
 };
 
 export default DriverTrackingPage;

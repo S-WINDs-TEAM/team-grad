@@ -5,7 +5,7 @@ const { getIO } = require('../socket/socketManager');
 const { notify } = require('../services/notificationService');
 const { NOTIF_CATEGORY, NOTIF_STATUS, BREAK_AUTO_APPROVE_MIN, DEFAULT_BREAK_MIN } = require('../utils/fleetConstants');
 const { calculateLocalAlternate } = require('../services/mapService');
-
+const { rebuildWaypointsForPolyline } = require('../services/routPlanningService');
 // Helper: find the managers of a company to receive a request.
 const getCompanyManagers = async (companyId) => {
     return User.find({ role: 'company_admin', companyId }).select('_id');
@@ -32,13 +32,6 @@ const createBreakRequest = async (req, res, next) => {
                 autoApproveInMin: BREAK_AUTO_APPROVE_MIN,
                 metadata: { durationMin, note },
             });
-
-            const tripDoc = await Trip.findById(tripId).select('origin destination vehicleId').populate({ path: 'vehicleId', select: 'plateNumber' });
-            const context = {
-            plateNumber: tripDoc?.vehicleId?.plateNumber || null,
-            driverName: req.user.name,
-            routeLine: `${tripDoc?.origin?.address || 'Origin'} → ${tripDoc?.destination?.address || 'Destination'}`,
-        };
             created.push(notif);
         }
         res.status(201).json({ success: true, msg: 'break request sent', requests: created });
@@ -56,7 +49,7 @@ const createRouteRequest = async (req, res, next) => {
         }
         const managers = await getCompanyManagers(req.user.companyId);
 
-                // FIXED: if the driver didn't send a computed alternate, calculate one
+        // FIXED: if the driver didn't send a computed alternate, calculate one
         // server-side around the most dangerous waypoint so the manager's
         // approval has a REAL route to switch to.
         let alt = alternateRoute;
@@ -80,6 +73,14 @@ const createRouteRequest = async (req, res, next) => {
             }
         }
 
+        // Context for the manager
+        const tripCtx = await Trip.findById(tripId).select('origin destination vehicleId').populate({ path: 'vehicleId', select: 'plateNumber' });
+        const context = {
+            plateNumber: tripCtx?.vehicleId?.plateNumber || null,
+            driverName: req.user.name,
+            routeLine: `${tripCtx?.origin?.address || 'Origin'} → ${tripCtx?.destination?.address || 'Destination'}`,
+        };
+
         if (!managers.length) return res.status(404).json({ success: false, msg: 'no manager found for your company' });
 
         const created = [];
@@ -95,7 +96,7 @@ const createRouteRequest = async (req, res, next) => {
                 relatedId: tripId,
                 status: NOTIF_STATUS.PENDING,
                 actionRequired: true,
-                metadata: { tripId, alternateRoute: alt, reason },
+                metadata: { tripId, alternateRoute: alt, context, reason },
             });
             created.push(notif);
         }
@@ -165,12 +166,26 @@ const decideRequest = async (req, res, next) => {
         if (notif.category === NOTIF_CATEGORY.ROUTE_REQUEST && decision === 'approved'
             && notif.metadata?.tripId && notif.metadata?.alternateRoute) {
             const alt = notif.metadata.alternateRoute;
+            // FIXED: rebuild REAL waypoints for the new polyline
+            const tripDoc = await Trip.findById(notif.metadata.tripId).select('vehicleType departureTime');
+            const dep = tripDoc?.departureTime && new Date(tripDoc.departureTime) > new Date()
+                ? new Date(tripDoc.departureTime) : new Date();
+            const rebuilt = await rebuildWaypointsForPolyline(alt.polyline, alt.totalDistanceKm, tripDoc?.vehicleType || 'car', dep);
             await Trip.findByIdAndUpdate(notif.metadata.tripId, {
                 routePolyline: alt.polyline,
-                waypoints: alt.waypoints,
-                overallRiskLevel: alt.overallRiskLevel || 'low',
+                waypoints: rebuilt.fullWaypoints,
+                overallRiskLevel: rebuilt.overallRisk,
+                totalDistanceKm: alt.totalDistanceKm,
+                totalDurationMin: rebuilt.totalDurationMin,
             });
         }
+
+        // Broadcast so dashboards/driver refresh the trip immediately
+        try {
+            const io = getIO();
+            io.to(`company:${notif.companyId}`).emit('trip:updated', { tripId: notif.metadata?.tripId });
+            io.to(`driver:${notif.senderId}`).emit('trip:updated', { tripId: notif.metadata?.tripId });
+        } catch (e) { /* socket not ready */ }
 
         // Notify the requester (driver) about the decision.
         await notify({

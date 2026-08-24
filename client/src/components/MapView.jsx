@@ -25,6 +25,8 @@ const MapView = ({
 }) => {
   const [showDetailed, setShowDetailed] = useState(false);
 
+  
+
   const displayWaypoints = showDetailed && detailedWaypoints ? detailedWaypoints : waypoints;
   const isDetailed = showDetailed && detailedWaypoints;
   const pointsCount = displayWaypoints?.length || 0;
@@ -119,7 +121,7 @@ const MapView = ({
         )}
 
         {/* Waypoints */}
-        {displayWaypoints?.map((wp, i) => {
+        {(displayWaypoints || []).filter(wp => wp && wp.weather).map((wp, i) => {
           const icon = getWaypointIcon(wp.weather.riskLevel, i);
           const { summary, recommendation } = interpretWeather(
             wp.weather,

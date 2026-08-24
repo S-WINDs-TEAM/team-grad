@@ -8,6 +8,8 @@ const addVehicleApi = (data) => axiosInstance.post('/fleet/vehicles', data);
 const inviteDriverApi = (data) => axiosInstance.post('/fleet/drivers/invite', data);
 const sendAlertApi = (data) => axiosInstance.post('/fleet/alert', data);
 const getMyTripApi = () => axiosInstance.get('/fleet-admin/my-trip');
+const approveAlternateApi = (id, data) => 
+    axiosInstance.patch(`/fleet/approve-alternate/${id}`, data);
 const assignDriverApi = (vehicleId, driverId) =>
     axiosInstance.put(`/fleet/vehicles/${vehicleId}/assign`, { driverId });
 const uploadVehiclePhotoApi = (vehicleId, formData) =>
@@ -29,4 +31,5 @@ export {
     getMyVehicleApi,
     assignDriverApi,
     getMyTripApi,
+    approveAlternateApi,
 };

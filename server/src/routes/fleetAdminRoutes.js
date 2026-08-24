@@ -3,7 +3,8 @@ const { protect, restrictTo } = require('../middlewares/authMiddleware');
 const {
     getVehicles, updateVehicleStatus, deleteVehicle,
     getDriversList, updateDriverWorkStatus, deleteDriver,
-    assignDriver, unassignDriver, getMyTrip,
+    assignDriver, unassignDriver, getMyTrip, approveAlternate,
+    rebuildTripWaypoints,
 } = require('../controllers/fleetAdminController');
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.patch('/drivers/:id/work-status', restrictTo('company_admin'), updateDriv
 router.delete('/drivers/:id', restrictTo('company_admin'), deleteDriver);
 
 router.get('/my-trip', restrictTo('company_driver'), getMyTrip);
-
+router.patch('/alerts/:alertId/approve-alternate', restrictTo('company_admin'), approveAlternate);
+router.post('/trips/:tripId/rebuild-waypoints', restrictTo('company_admin'), rebuildTripWaypoints);
 module.exports = router;

@@ -116,6 +116,7 @@ const computeWaypointsForDeparture = async (rawWaypoints, vehicleType, departure
     const overallRisk = avgRiskScore > 2.2 ? 'high' : avgRiskScore > 1.4 ? 'medium' : 'low';
     const totalDurationMin = (cumulativeEta.getTime() - departure.getTime()) / (60 * 1000);
 
+   
     return {
         // For client response (30km)
         waypointsWithWeather: displayWaypoints,
@@ -125,7 +126,18 @@ const computeWaypointsForDeparture = async (rawWaypoints, vehicleType, departure
         avgRiskScore,
         totalDurationMin,
         arrivalTime: cumulativeEta,
+        
     };
 };
 
-module.exports = { getRouteAndWaypoints, computeWaypointsForDeparture };
+// FIXED: rebuild a FULL waypoint set (weather + safe speed + risk) for any
+// polyline — used when a trip is switched to an alternate route, so the new
+// route gets REAL data instead of bare {location} points (the 1798-dot bug).
+const rebuildWaypointsForPolyline = async (polyline, totalDistanceKm, vehicleType, departure) => {
+    const coordsLngLat = (polyline || []).map(([lat, lng]) => [lng, lat]);
+    const rawWaypoints = sampleWaypoints(coordsLngLat, totalDistanceKm);
+    return computeWaypointsForDeparture(rawWaypoints, vehicleType || 'car', departure || new Date());
+};
+
+
+module.exports = { getRouteAndWaypoints, computeWaypointsForDeparture, rebuildWaypointsForPolyline};

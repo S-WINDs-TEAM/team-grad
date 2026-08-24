@@ -29,7 +29,9 @@ const FleetMapController = ({
     showWaypoints,
     selectedVehicleId,
     selectedWaypointIndex,
-    onWaypointClick, // ✅ Callback when a waypoint is clicked on the map
+    onWaypointClick,
+    hazardFocus,
+    alternatePreview,
 }) => {
     const map = useMap();
     const layersRef = useRef({
@@ -38,6 +40,7 @@ const FleetMapController = ({
         startEnd: [],
         waypoints: [],
         routeMarkers: [],
+        focus: [],
     });
     const prevSelectedRef = useRef(null);
     const prevShowRoutesRef = useRef(showRoutes);
@@ -314,6 +317,7 @@ const FleetMapController = ({
 
         // Store layers
         layersRef.current = {
+            ...layersRef.current,
             routes: newRoutes,
             markers: newMarkers,
             startEnd: newStartEnd,
@@ -365,6 +369,35 @@ const FleetMapController = ({
             layersRef.current.routeMarkers.forEach(layer => map.removeLayer(layer));
         };
     }, [map, mergedFleetData, vehiclesWithLocation, showRoutes, showLive, selectedTripDetails, showWaypoints, selectedVehicleId, selectedWaypointIndex, onWaypointClick]);
+
+    // Hazard focus marker + alternate preview + zoom to danger
+    useEffect(() => {
+        (layersRef.current.focus || []).forEach(layer => map.removeLayer(layer));
+        const focusLayers = [];
+
+        if (alternatePreview?.polyline?.length) {
+            const line = L.polyline(alternatePreview.polyline, {
+                color: '#F59E0B', weight: 5, opacity: 0.9, dashArray: '10, 10',
+            }).addTo(map).bindPopup('Proposed alternate route');
+            focusLayers.push(line);
+        }
+
+        if (hazardFocus) {
+            const icon = L.divIcon({
+                className: 'hazard-marker',
+                html: `<div style="width:18px;height:18px;background:#EF4444;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 8px rgba(239,68,68,0.35);"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+            });
+            const m = L.marker([hazardFocus.lat, hazardFocus.lng], { icon })
+                .addTo(map).bindPopup('Weather hazard location');
+            focusLayers.push(m);
+            map.flyTo([hazardFocus.lat, hazardFocus.lng], 10, { duration: 0.8 });
+        }
+
+        layersRef.current.focus = focusLayers;
+        return () => { focusLayers.forEach(layer => map.removeLayer(layer)); };
+    }, [hazardFocus, alternatePreview, map]);
 
     return null;
 };

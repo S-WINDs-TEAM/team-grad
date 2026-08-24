@@ -3,12 +3,13 @@ const FleetVehicle = require('../models/FleetVehicle');
 const User = require('../models/User');
 const { getRouteAndWaypoints, computeWaypointsForDeparture } = require('../services/routPlanningService');
 const { calculateLocalAlternate } = require('../services/mapService');
+const { captureCircleFromWaypoints } = require('../services/simulationService');
 const Alert = require('../models/Alert');
 const { getIO } = require('../socket/socketManager');
 const { evaluateFatigue } = require('../services/fatigueService');
 const { checkCargo } = require('../services/cargoService');
 const { notify } = require('../services/notificationService');
-
+const { computeAlternateCandidates, applyAlternate } = require('../services/alternateService');
 // ================================================================
 // Plan Route (Unit 1/2 fields + alternate route + manager notification)
 // ================================================================
@@ -21,8 +22,9 @@ const planRoute = async (req, res, next) => {
 
         const { rawWaypoints, routePolyline, route } = await getRouteAndWaypoints(origin, destination);
         const { waypointsWithWeather, fullWaypoints, overallRisk, totalDurationMin } =
-            await computeWaypointsForDeparture(rawWaypoints, vType, departure);
+                await computeWaypointsForDeparture(rawWaypoints, vType, departure);
 
+        captureCircleFromWaypoints(fullWaypoints);
         // Unit 2: Cargo sensitivity — one alert per risk type
         const cargo = cargoType || 'general';
         const cargoAlerts = [];
@@ -176,7 +178,7 @@ const planRoute = async (req, res, next) => {
                         relatedId: trip._id,
                         status: 'pending',
                         actionRequired: true,
-                        metadata: { tripId: trip._id, alternateRoute: alternateRouteData, reason: 'auto-detected hazard' },
+                        metadata: { tripId: trip._id, alternateRoute: alternateRouteData, context, reason: 'auto-detected hazard' },
                     });
                 }
             }
@@ -387,4 +389,27 @@ const getTripById = async (req, res, next) => {
     }
 };
 
-module.exports = { planRoute, getSmartDeparture, getTripHistory, getTripById };
+// GET /api/routes/:tripId/alternates — verified alternate candidates + hazard info
+const getAlternates = async (req, res, next) => {
+    try {
+        const trip = await Trip.findById(req.params.tripId);
+        if (!trip) return res.status(404).json({ success: false, msg: 'trip not found' });
+        const result = await computeAlternateCandidates(trip);
+        res.status(200).json({ success: true, ...result });
+    } catch (err) { next(err); }
+};
+
+// POST /api/routes/:tripId/apply-alternate — stitch the chosen candidate into the trip
+const applyAlternateRoute = async (req, res, next) => {
+    try {
+        const { candidate } = req.body;
+        if (!candidate?.coordinates?.length) return res.status(400).json({ success: false, msg: 'candidate is required' });
+        const trip = await applyAlternate(req.params.tripId, candidate);
+        res.status(200).json({ success: true, msg: 'alternate applied', tripId: trip._id });
+    } catch (err) {
+        if (err.statusCode) return res.status(err.statusCode).json({ success: false, msg: err.message });
+        next(err);
+    }
+};
+
+module.exports = { planRoute, getSmartDeparture, getTripHistory, getTripById, getAlternates, applyAlternateRoute };

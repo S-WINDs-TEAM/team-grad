@@ -18,7 +18,7 @@ const statusColor = (status) => {
     return theme.textMuted;
 };
 
-const NotificationCenter = ({ open, onOpenChange }) => {
+const NotificationCenter = ({ open, onOpenChange, onDataChanged }) => {
     // const [open, setOpen] = useState(false);
     const [unread, setUnread] = useState({ total: 0, categories: {} });
     const [items, setItems] = useState([]);
@@ -54,6 +54,7 @@ const NotificationCenter = ({ open, onOpenChange }) => {
             await decideRequestApi(id, { decision });
             toast.success(decision === 'approved' ? 'Request approved' : 'Request rejected');
             refresh();
+            if (onDataChanged) onDataChanged();
         } catch (e) {
             toast.error(e.response?.data?.msg || 'could not decide');
         } finally {
@@ -112,6 +113,13 @@ const NotificationCenter = ({ open, onOpenChange }) => {
                                     </span>
                                 </div>
                                 <div style={styles.itemMsg}>{n.message}</div>
+                                {/* Context line: plate · driver · route */}
+                                {n.metadata?.context && (
+                                    <div style={styles.context}>
+                                        {n.metadata.context.plateNumber ? `${n.metadata.context.plateNumber} · ` : ''}
+                                        {n.metadata.context.driverName} · {n.metadata.context.routeLine}
+                                    </div>
+                                )}
                                 <div style={styles.itemMeta}>{new Date(n.createdAt).toLocaleString()}</div>
 
                                 {n.actionRequired && n.status === 'pending' && (
@@ -158,6 +166,7 @@ const styles = {
     itemTitle: { fontSize: '13px', fontWeight: '700', color: theme.textPrimary },
     itemStatus: { fontSize: '10px', fontWeight: '700', textTransform: 'uppercase' },
     itemMsg: { fontSize: '12px', color: theme.textSecondary, marginTop: '4px', lineHeight: 1.5 },
+    context: { fontSize: '11px', color: theme.accentBlue, marginTop: '4px', fontWeight: '600' },
     itemMeta: { fontSize: '10px', color: theme.textMuted, marginTop: '6px' },
     itemActions: { display: 'flex', gap: '8px', marginTop: '10px' },
     approveBtn: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', background: theme.accentGreen, color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' },

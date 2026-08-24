@@ -1,9 +1,12 @@
 const User = require('../models/User');
 const FleetVehicle = require('../models/FleetVehicle');
 const Trip = require('../models/Trip');
+const Alert = require('../models/Alert');
 const { getDriverDrivenHoursToday } = require('../services/fatigueService');
+const { notify } = require('../services/notificationService');
+const { getIO } = require('../socket/socketManager');
 const { OPERATIONAL_STATUS, WORK_STATUS, OVER_TRIP_HOURS } = require('../utils/fleetConstants');
-
+const { rebuildWaypointsForPolyline } = require('../services/routPlanningService');
 const dayBounds = () => {
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end = new Date(); end.setHours(23, 59, 59, 999);
@@ -214,8 +217,80 @@ const getMyTrip = async (req, res, next) => {
     } catch (err) { next(err); }
 };
 
+// company_admin — apply the alternate route attached to a hazard alert (REAL action).
+const approveAlternate = async (req, res, next) => {
+    try {
+        const { alertId } = req.params;
+        const alert = await Alert.findOne({ _id: alertId, companyId: req.user.companyId });
+        if (!alert) return res.status(404).json({ success: false, msg: 'alert not found' });
+
+        const tripId = alert.details?.tripId;
+        const alt = alert.details?.proposedRoute;
+        if (!tripId || !alt?.polyline?.length) {
+            return res.status(409).json({ success: false, msg: 'no alternate route attached to this alert' });
+        }
+
+        const tripDoc = await Trip.findById(tripId).select('vehicleType departureTime');
+        const dep = tripDoc?.departureTime && new Date(tripDoc.departureTime) > new Date()
+            ? new Date(tripDoc.departureTime) : new Date();
+        const rebuilt = await rebuildWaypointsForPolyline(alt.polyline, alt.totalDistanceKm, tripDoc?.vehicleType || 'car', dep);
+        await Trip.findByIdAndUpdate(tripId, {
+            routePolyline: alt.polyline,
+            waypoints: rebuilt.fullWaypoints,
+            overallRiskLevel: rebuilt.overallRisk,
+            totalDistanceKm: alt.totalDistanceKm,
+            totalDurationMin: rebuilt.totalDurationMin,
+        });
+        alert.status = 'approved';
+        await alert.save();
+
+        const trip = await Trip.findById(tripId).select('userId');
+        const driverUserId = alert.driverId || trip?.userId;
+
+        await notify({
+            companyId: req.user.companyId,
+            recipientId: driverUserId,
+            senderId: req.user._id,
+            category: 'decision',
+            title: 'Route switched to alternate',
+            message: 'Your manager applied the alternate route for your trip.',
+            relatedModel: 'Trip',
+            relatedId: tripId,
+            status: 'approved',
+        });
+
+        try {
+            const io = getIO();
+            io.to(`company:${req.user.companyId}`).emit('trip:updated', { tripId });
+            if (driverUserId) io.to(`driver:${driverUserId}`).emit('trip:updated', { tripId });
+        } catch (e) { /* socket not ready */ }
+
+        res.status(200).json({ success: true, msg: 'alternate route applied' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// Repair tool: rebuild full waypoints for a trip whose waypoints got corrupted.
+const rebuildTripWaypoints = async (req, res, next) => {
+    try {
+        const { tripId } = req.params;
+        const trip = await Trip.findById(tripId);
+        if (!trip) return res.status(404).json({ success: false, msg: 'trip not found' });
+        const dep = trip.departureTime && new Date(trip.departureTime) > new Date()
+            ? new Date(trip.departureTime) : new Date();
+        const rebuilt = await rebuildWaypointsForPolyline(trip.routePolyline, trip.totalDistanceKm, trip.vehicleType, dep);
+        trip.waypoints = rebuilt.fullWaypoints;
+        trip.overallRiskLevel = rebuilt.overallRisk;
+        trip.totalDurationMin = rebuilt.totalDurationMin;
+        await trip.save();
+        res.status(200).json({ success: true, msg: 'waypoints rebuilt', count: rebuilt.fullWaypoints.length });
+    } catch (err) { next(err); }
+};
+
 module.exports = {
     getVehicles, updateVehicleStatus, deleteVehicle,
     getDriversList, updateDriverWorkStatus, deleteDriver,
-    assignDriver, unassignDriver, getMyTrip,
+    assignDriver, unassignDriver, getMyTrip, approveAlternate,
+    rebuildTripWaypoints,
 };
