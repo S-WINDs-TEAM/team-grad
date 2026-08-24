@@ -1,10 +1,10 @@
 import { User, Mail, Lock, Eye, Car } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Register = () => {
   return (
     <div className="min-h-screen bg-[#07111F] p-4">
       <div className="min-h-[calc(100vh-2rem)] overflow-hidden rounded-4xl border border-slate-800 flex">
-        
         {/* Left Section */}
         <div className="hidden lg:flex flex-1 relative">
           <img
@@ -22,17 +22,13 @@ const Register = () => {
               <h1 className="text-4xl font-bold">S-WINDS</h1>
             </div>
 
-            <h2 className="text-6xl font-light leading-tight">
-              Drive with
-            </h2>
+            <h2 className="text-6xl font-light leading-tight">Drive with</h2>
 
-            <h2 className="text-7xl font-bold text-blue-500 mb-8">
-              S-WINDS
-            </h2>
+            <h2 className="text-7xl font-bold text-blue-500 mb-8">S-WINDS</h2>
 
             <p className="text-slate-300 text-xl max-w-md mb-12">
-              Join our community of trusted drivers and
-              start your journey today.
+              Join our community of trusted drivers and start your journey
+              today.
             </p>
 
             <div className="space-y-8">
@@ -57,7 +53,6 @@ const Register = () => {
         {/* Right Section */}
         <div className="flex flex-1 items-center justify-center p-6 lg:p-10 bg-[#091321]">
           <div className="w-full max-w-xl rounded-4xl border border-slate-700 bg-[#0D1628]/90 p-8 backdrop-blur-xl shadow-[0_0_40px_rgba(59,130,246,0.15)]">
-            
             {/* Avatar */}
             <div className="flex justify-center mb-6">
               <div className="w-24 h-24 rounded-full border border-blue-500 flex items-center justify-center">
@@ -74,10 +69,7 @@ const Register = () => {
             </p>
 
             <form className="space-y-5">
-              <InputField
-                icon={<User size={18} />}
-                placeholder="Full Name"
-              />
+              <InputField icon={<User size={18} />} placeholder="Full Name" />
 
               <InputField
                 icon={<Mail size={18} />}
@@ -121,7 +113,7 @@ const Register = () => {
                   w-full
                   h-14
                   rounded-xl
-                  bg-gradient-to-r
+                  bg-linear-to-r
                   from-blue-500
                   to-blue-700
                   text-white
@@ -136,7 +128,7 @@ const Register = () => {
               <p className="text-center text-slate-400">
                 Already have an account?{" "}
                 <span className="text-blue-500 cursor-pointer">
-                  Sign In
+                  <Link to="/login">Sign In</Link>
                 </span>
               </p>
             </form>
