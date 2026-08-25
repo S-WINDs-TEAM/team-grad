@@ -4,6 +4,8 @@ const {
   getSmartDeparture,
   getTripHistory,
   getTripById,
+  getAlternates,
+  applyAlternateRoute,
 } = require("../controllers/routeController");
 const { protect } = require("../middlewares/authMiddleware");
 const validate = require("../middlewares/validateMIddleware");
@@ -23,5 +25,6 @@ router.post(
 );
 router.get("/history", protect, getTripHistory);
 router.get("/:tripId", protect, getTripById);
-
+router.get("/:tripId/alternates", protect, getAlternates);
+router.post("/:tripId/apply-alternate", protect, applyAlternateRoute);
 module.exports = router;

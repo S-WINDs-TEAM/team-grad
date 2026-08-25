@@ -1,14 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
-import  geocodeSearchApi  from '../api/geocodeApi';
+import { useState, useEffect, useRef } from "react";
+import geocodeSearchApi from "../api/geocodeApi";
 
-const LocationAutocomplete = ({ label, placeholder, onSelect }) => {
-  const [query, setQuery] = useState('');
+const LocationAutocomplete = ({
+  label,
+  placeholder,
+  onSelect,
+  defaultValue = "",
+}) => {
+  const [query, setQuery] = useState(defaultValue);
   const [results, setResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const debounceRef = useRef(null);
   const skipNextSearch = useRef(false); // new
+
+  // sync external defaultValue (when a saved trip loads after mount)
+  useEffect(() => {
+    if (!defaultValue) return;
+    skipNextSearch.current = true; // don't fire a geocode request
+    setQuery(defaultValue);
+  }, [defaultValue]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -50,22 +62,20 @@ const LocationAutocomplete = ({ label, placeholder, onSelect }) => {
   };
 
   //keyboard checker automation
-  const handleKeyDown = (e)=> {
-    if(!showDropdown || results.length===0) return;
+  const handleKeyDown = (e) => {
+    if (!showDropdown || results.length === 0) return;
 
-    if(e.key === 'Tab' || e.key === 'Enter') {
+    if (e.key === "Tab" || e.key === "Enter") {
       e.preventDefault();
       handleSelect(results[highlightedIndex]);
-
-    }else if (e.key === 'ArrowDown') {
+    } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlightedIndex((prev)=> Math.min(prev +1, results.length -1));
-
-    }else if (e.key === 'ArrowUp') {
+      setHighlightedIndex((prev) => Math.min(prev + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setHighlightedIndex((prev)=> Math.max(prev -1, 0));
+      setHighlightedIndex((prev) => Math.max(prev - 1, 0));
     }
-  }
+  };
 
   return (
     <div style={styles.wrapper}>
@@ -88,9 +98,9 @@ const LocationAutocomplete = ({ label, placeholder, onSelect }) => {
               key={i}
               style={{
                 ...styles.option,
-              ...(i === highlightedIndex ? styles.optionHighlighted: {}),
-            }}
-              onMouseEnter={()=> setHighlightedIndex(i)}
+                ...(i === highlightedIndex ? styles.optionHighlighted : {}),
+              }}
+              onMouseEnter={() => setHighlightedIndex(i)}
               onMouseDown={() => handleSelect(place)}
             >
               📍 {place.displayName}
@@ -103,24 +113,53 @@ const LocationAutocomplete = ({ label, placeholder, onSelect }) => {
 };
 
 const styles = {
-  wrapper: { position: 'relative', marginBottom: '4px' },
-  label: { color: '#8a93a3', fontSize: '0.75rem', textTransform: 'uppercase', display: 'block', marginBottom: '6px' },
-  input: {
-    width: '100%', background: '#0a0e14', border: '1px solid #2a2f3a', borderRadius: '8px',
-    padding: '10px 12px', color: '#fff', fontSize: '0.9rem', boxSizing: 'border-box',
+  wrapper: { position: "relative", marginBottom: "4px" },
+  label: {
+    color: "#8a93a3",
+    fontSize: "0.75rem",
+    textTransform: "uppercase",
+    display: "block",
+    marginBottom: "6px",
   },
-  loadingText: { color: '#8a93a3', fontSize: '0.7rem', marginTop: '4px', display: 'block' },
+  input: {
+    width: "100%",
+    background: "#0a0e14",
+    border: "1px solid #2a2f3a",
+    borderRadius: "8px",
+    padding: "10px 12px",
+    color: "#fff",
+    fontSize: "0.9rem",
+    boxSizing: "border-box",
+  },
+  loadingText: {
+    color: "#8a93a3",
+    fontSize: "0.7rem",
+    marginTop: "4px",
+    display: "block",
+  },
   dropdown: {
-    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-    background: '#11151c', border: '1px solid #2a2f3a', borderRadius: '8px',
-    marginTop: '4px', maxHeight: '200px', overflowY: 'auto',
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    background: "#11151c",
+    border: "1px solid #2a2f3a",
+    borderRadius: "8px",
+    marginTop: "4px",
+    maxHeight: "200px",
+    overflowY: "auto",
   },
   option: {
-    padding: '10px 12px', color: '#fff', fontSize: '0.8rem', cursor: 'pointer',
-    borderBottom: '1px solid #1a1f2a',
+    padding: "10px 12px",
+    color: "#fff",
+    fontSize: "0.8rem",
+    cursor: "pointer",
+    borderBottom: "1px solid #1a1f2a",
   },
   optionHighlighted: {
-    background: 'rgba(212,255,0,0.1)', borderLeft:'2px solid #d4ff00',
+    background: "rgba(212,255,0,0.1)",
+    borderLeft: "2px solid #d4ff00",
   },
 };
 

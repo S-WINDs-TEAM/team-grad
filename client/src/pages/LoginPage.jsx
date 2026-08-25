@@ -178,7 +178,7 @@ const LoginPage = () => {
               Merged both into a single style object. */}
           <p style={{ ...styles.switchText, marginTop: "8px" }}>
             <Link
-              to="/"
+              to="/landing"
               style={{
                 ...styles.link,
                 color: theme.textMuted,

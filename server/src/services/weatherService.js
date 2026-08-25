@@ -117,35 +117,36 @@ const fetchWeatherFromOpenMeteo = async (lat, lng, targetTime) => {
     icon: getIconCode(weatherInfo.condition),
   };
 
-  // ================================================================
+  // 🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪
   // 🧪 TESTING: Force dangerous weather on a specific zone (KM 45–48)
   // ================================================================
   // This block overrides weather data for coordinates within the danger zone.
   // After testing, remove or comment out this block to restore normal behavior.
-  const isDangerZone = (lat, lng) => {
-    // Cairo-Alexandria road: KM 45–48 roughly at lat 30.22–30.30, lng 30.48–30.58
-    const latMin = 30.22;
-    const latMax = 30.3;
-    const lngMin = 30.48;
-    const lngMax = 30.58;
-    return lat >= latMin && lat <= latMax && lng >= lngMin && lng <= lngMax;
-  };
 
-  if (isDangerZone(lat, lng)) {
-    // Override weather to simulate a sandstorm
-    weatherData.condition = "sandstorm";
-    weatherData.description = "Severe sandstorm with near-zero visibility";
-    weatherData.visibility = 0.15; // 150 meters → very low visibility
-    weatherData.windSpeed = 80; // 80 km/h → very high wind
-    weatherData.windGust = 120; // Gusts up to 120 km/h
-    weatherData.precipitation = 0;
-    weatherData.humidity = 20;
-    weatherData.temperature = 32;
-    weatherData.feelsLike = 28;
-    // This will trigger `riskLevel = 'high'` in geoUtils.js
-    console.log(`🧪 DANGER ZONE: ${lat}, ${lng} → Forcing sandstorm`);
-  }
-  // ================================================================
+  // const isDangerZone = (lat, lng) => {
+  //     // Cairo-Alexandria road: KM 45–48 roughly at lat 30.22–30.30, lng 30.48–30.58
+  //     const latMin = 30.22;
+  //     const latMax = 30.30;
+  //     const lngMin = 30.48;
+  //     const lngMax = 30.58;
+  //     return lat >= latMin && lat <= latMax && lng >= lngMin && lng <= lngMax;
+  // };
+
+  // if (isDangerZone(lat, lng)) {
+  //     // Override weather to simulate a sandstorm
+  //     weatherData.condition = 'sandstorm';
+  //     weatherData.description = 'Severe sandstorm with near-zero visibility';
+  //     weatherData.visibility = 0.15; // 150 meters → very low visibility
+  //     weatherData.windSpeed = 80;     // 80 km/h → very high wind
+  //     weatherData.windGust = 120;     // Gusts up to 120 km/h
+  //     weatherData.precipitation = 0;
+  //     weatherData.humidity = 20;
+  //     weatherData.temperature = 32;
+  //     weatherData.feelsLike = 28;
+  //     // This will trigger `riskLevel = 'high'` in geoUtils.js
+  //     console.log(`🧪 DANGER ZONE: ${lat}, ${lng} → Forcing sandstorm`);
+  // }
+  // 🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪🧪
   // End of testing block
   // ================================================================
 

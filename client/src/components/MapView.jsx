@@ -9,7 +9,7 @@ import L from "leaflet";
 import { useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { getRiskColor } from "../utils/riskColors";
-import { interpretWeather } from "../utils/riskTranslator"; // ✅ NEW
+import { interpretWeather } from "../utils/riskTranslator";
 
 // Fix Leaflet default icon bug
 delete L.Icon.Default.prototype._getIconUrl;
@@ -24,21 +24,19 @@ L.Icon.Default.mergeOptions({
 
 const MapView = ({
   routePolyline,
-  waypoints, // 30km (summary)
-  detailedWaypoints, // 5km (detailed) – maby undefined
+  waypoints,
+  detailedWaypoints,
   origin,
   destination,
-  vehicleType = "car", // ✅ NEW: default vehicle type for translation
-  vehicleHeight = "medium", // ✅ NEW: default height
+  vehicleType = "car",
+  vehicleHeight = "medium",
+  alternateRoute, // 🆕 NEW: المسار البديل من الـ API
 }) => {
   const [showDetailed, setShowDetailed] = useState(false);
 
-  // waypoints based on selected btn
   const displayWaypoints =
     showDetailed && detailedWaypoints ? detailedWaypoints : waypoints;
   const isDetailed = showDetailed && detailedWaypoints;
-
-  // badge
   const pointsCount = displayWaypoints?.length || 0;
 
   if (!routePolyline || routePolyline.length === 0) {
@@ -52,7 +50,6 @@ const MapView = ({
   const centerIndex = Math.floor(routePolyline.length / 2);
   const center = routePolyline[centerIndex];
 
-  // END AND START ICONS
   const createMarkerIcon = (color, label) =>
     L.divIcon({
       className: "custom-marker",
@@ -65,7 +62,6 @@ const MapView = ({
   const startIcon = createMarkerIcon("#22c55e", "S");
   const endIcon = createMarkerIcon("#ef4444", "E");
 
-  //  ICONS Waypoints
   const getWaypointIcon = (riskLevel, index) => {
     const color = getRiskColor(riskLevel);
     return L.divIcon({
@@ -90,7 +86,7 @@ const MapView = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* main route */}
+        {/* Main route (blue solid) */}
         <Polyline
           positions={routePolyline}
           pathOptions={{
@@ -101,7 +97,33 @@ const MapView = ({
           }}
         />
 
-        {/* start*/}
+        {/* 🆕 NEW: Alternate route (orange dashed) */}
+        {alternateRoute &&
+          alternateRoute.polyline &&
+          alternateRoute.polyline.length > 0 && (
+            <Polyline
+              positions={alternateRoute.polyline}
+              pathOptions={{
+                color: "#f59e0b",
+                weight: 4,
+                opacity: 0.8,
+                dashArray: "10, 10", // خط متقطع
+                lineJoin: "round",
+              }}
+            >
+              <Popup>
+                <strong>🔄 Alternate Route</strong>
+                <br />
+                Distance: {alternateRoute.totalDistanceKm?.toFixed(1)} km
+                <br />
+                Duration: {Math.round(alternateRoute.totalDurationMin)} min
+                <br />
+                Risk: {alternateRoute.overallRiskLevel?.toUpperCase()}
+              </Popup>
+            </Polyline>
+          )}
+
+        {/* Start marker */}
         {origin && (
           <Marker position={[origin.lat, origin.lng]} icon={startIcon}>
             <Popup>
@@ -112,30 +134,29 @@ const MapView = ({
           </Marker>
         )}
 
-        {/* end*/}
+        {/* End marker */}
         {destination && (
           <Marker position={[destination.lat, destination.lng]} icon={endIcon}>
             <Popup>
               <strong>🔴 Destination</strong>
               <br />
-              {destination.address || "Destination"}
+              {destination.address || "End"}
             </Popup>
           </Marker>
         )}
 
-        {/* Waypoints ( calc) */}
-        {displayWaypoints?.map((wp, i) => {
-          const icon = getWaypointIcon(wp.weather.riskLevel, i);
+        {/* Waypoints */}
+        {(displayWaypoints || [])
+          .filter((wp) => wp && wp.weather)
+          .map((wp, i) => {
+            const icon = getWaypointIcon(wp.weather.riskLevel, i);
+            const { summary, recommendation } = interpretWeather(
+              wp.weather,
+              vehicleType || "car",
+              vehicleHeight || "medium",
+            );
 
-          // NEW: Get interpreted summary and recommendation
-          const { summary, recommendation } = interpretWeather(
-            wp.weather,
-            vehicleType || "car",
-            vehicleHeight || "medium",
-          );
-
-          // Build popup content with interpretation
-          const popupContent = `
+            const popupContent = `
             <div style="min-width:220px;">
               <strong>📍 KM ${Math.round(wp.distanceFromStart)}</strong><br />
               <strong>ETA:</strong> ${new Date(wp.eta).toLocaleTimeString()}
@@ -157,20 +178,20 @@ const MapView = ({
             </div>
           `;
 
-          return (
-            <Marker
-              key={i}
-              position={[wp.location.lat, wp.location.lng]}
-              icon={icon}
-            >
-              <Popup>
-                <div dangerouslySetInnerHTML={{ __html: popupContent }} />
-              </Popup>
-            </Marker>
-          );
-        })}
+            return (
+              <Marker
+                key={i}
+                position={[wp.location.lat, wp.location.lng]}
+                icon={icon}
+              >
+                <Popup>
+                  <div dangerouslySetInnerHTML={{ __html: popupContent }} />
+                </Popup>
+              </Marker>
+            );
+          })}
 
-        {/* always enable*/}
+        {/* Toggle button */}
         <div style={styles.buttonOverlay}>
           <button
             onClick={() => setShowDetailed(!showDetailed)}

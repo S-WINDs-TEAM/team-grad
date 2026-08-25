@@ -77,6 +77,17 @@ const planRouteSchema = joi.object({
   vehicleType: joi.string().valid("car", "motorcycle", "truck").default("car"),
   departureTime: joi.date().iso().optional(),
   vehicleId: joi.string().hex().length(24).optional(),
+  cargoType: joi
+    .string()
+    .valid(
+      "general",
+      "perishable",
+      "pharmaceutical",
+      "electronics",
+      "chemicals",
+      "fragile",
+    )
+    .default("general"),
 });
 
 // SMART DP SCMA

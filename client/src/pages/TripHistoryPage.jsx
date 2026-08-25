@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { useDispatch } from 'react-redux';
 import toast from "react-hot-toast";
 import useAuth from "../hooks/useAuth";
 import { getHistoryApi } from "../api/routeApi";
@@ -13,21 +12,30 @@ const TripHistoryPage = () => {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 0,
+  });
+
+  // Fetch trips whenever the page changes
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const response = await getHistoryApi();
+        setLoading(true);
+        const response = await getHistoryApi(pagination.page, pagination.limit);
         setTrips(response.data.trips);
+        setPagination(response.data.pagination);
       } catch (err) {
-        console.log("error happened: ", err);
-
         toast.error("Could not load trip history");
       } finally {
         setLoading(false);
       }
     };
     fetchHistory();
-  }, []);
+  }, [pagination.page]);
 
   const handleLogout = async () => {
     await logout();
@@ -45,6 +53,25 @@ const TripHistoryPage = () => {
     });
   };
 
+  // Smart back navigation based on user role
+  const handleBack = () => {
+    if (user?.role === "company_admin") {
+      navigate("/fleet");
+    } else {
+      navigate("/home");
+    }
+  };
+
+  // Pagination handlers
+  const goToPage = (newPage) => {
+    if (newPage < 1 || newPage > pagination.pages) return;
+    setPagination((prev) => ({ ...prev, page: newPage }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const nextPage = () => goToPage(pagination.page + 1);
+  const prevPage = () => goToPage(pagination.page - 1);
+
   return (
     <div style={styles.page}>
       {/* Header */}
@@ -55,7 +82,7 @@ const TripHistoryPage = () => {
           <span style={styles.logoSubtext}>Trip History</span>
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          <button style={styles.backBtn} onClick={handleBack}>
             ← Back
           </button>
           <span style={styles.userName}>{user?.name}</span>
@@ -68,7 +95,11 @@ const TripHistoryPage = () => {
       {/* Content */}
       <div style={styles.content}>
         <h1 style={styles.title}>📜 Trip History</h1>
-        <p style={styles.subtitle}>All your planned trips, sorted by date.</p>
+        <p style={styles.subtitle}>
+          {user?.role === "company_admin"
+            ? "All trips for your company, sorted by date."
+            : "All your planned trips, sorted by date."}
+        </p>
 
         {loading ? (
           <div style={styles.loading}>Loading trips...</div>
@@ -81,48 +112,96 @@ const TripHistoryPage = () => {
             </button>
           </div>
         ) : (
-          <div style={styles.tripList}>
-            {trips.map((trip, index) => (
-              <div key={trip._id || index} style={styles.tripCard}>
-                <div style={styles.tripHeader}>
-                  <div style={styles.tripRoute}>
-                    <span style={styles.tripOrigin}>
-                      {trip.origin?.address || "Start"}
-                    </span>
-                    <span style={styles.tripArrow}>→</span>
-                    <span style={styles.tripDestination}>
-                      {trip.destination?.address || "End"}
+          <>
+            <div style={styles.tripList}>
+              {trips.map((trip, index) => (
+                <div key={trip._id || index} style={styles.tripCard}>
+                  <div style={styles.tripHeader}>
+                    <div style={styles.tripRoute}>
+                      <span style={styles.tripOrigin}>
+                        {trip.origin?.address || "Start"}
+                      </span>
+                      <span style={styles.tripArrow}>→</span>
+                      <span style={styles.tripDestination}>
+                        {trip.destination?.address || "End"}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        ...styles.riskBadge,
+                        color: getRiskPathColor(trip.overallRiskLevel),
+                        borderColor: getRiskPathColor(trip.overallRiskLevel),
+                      }}
+                    >
+                      {trip.overallRiskLevel?.toUpperCase() || "N/A"}
                     </span>
                   </div>
-                  <span
-                    style={{
-                      ...styles.riskBadge,
-                      color: getRiskPathColor(trip.overallRiskLevel),
-                      borderColor: getRiskPathColor(trip.overallRiskLevel),
-                    }}
-                  >
-                    {trip.overallRiskLevel?.toUpperCase() || "N/A"}
-                  </span>
-                </div>
 
-                <div style={styles.tripDetails}>
-                  <span>
-                    📅 {formatDate(trip.departureTime || trip.createdAt)}
+                  <div style={styles.tripDetails}>
+                    <span>
+                      📅 {formatDate(trip.departureTime || trip.createdAt)}
+                    </span>
+                    <span>
+                      📏 {trip.totalDistanceKm?.toFixed(1) || "N/A"} km
+                    </span>
+                    <span>⏱️ {Math.round(trip.totalDurationMin || 0)} min</span>
+                    <span>🚗 {trip.vehicleType || "N/A"}</span>
+                    {trip.vehicleId?.plateNumber && (
+                      <span>🚛 {trip.vehicleId.plateNumber}</span>
+                    )}
+                  </div>
+
+                  <button
+                    style={styles.viewBtn}
+                    onClick={() => navigate(`/plan?tripId=${trip._id}`)}
+                  >
+                    View Details →
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {pagination.pages > 1 && (
+              <div style={styles.paginationWrapper}>
+                <button
+                  style={{
+                    ...styles.paginationBtn,
+                    opacity: pagination.page === 1 ? 0.4 : 1,
+                    cursor: pagination.page === 1 ? "not-allowed" : "pointer",
+                  }}
+                  onClick={prevPage}
+                  disabled={pagination.page === 1}
+                >
+                  ← Previous
+                </button>
+
+                <div style={styles.paginationInfo}>
+                  <span style={styles.paginationText}>
+                    Page {pagination.page} of {pagination.pages}
                   </span>
-                  <span>📏 {trip.totalDistanceKm?.toFixed(1) || "N/A"} km</span>
-                  <span>⏱️ {Math.round(trip.totalDurationMin || 0)} min</span>
-                  <span>🚗 {trip.vehicleType || "N/A"}</span>
+                  <span style={styles.paginationTotal}>
+                    {pagination.total} trips total
+                  </span>
                 </div>
 
                 <button
-                  style={styles.viewBtn}
-                  onClick={() => navigate(`/plan?tripId=${trip._id}`)}
+                  style={{
+                    ...styles.paginationBtn,
+                    opacity: pagination.page === pagination.pages ? 0.4 : 1,
+                    cursor:
+                      pagination.page === pagination.pages
+                        ? "not-allowed"
+                        : "pointer",
+                  }}
+                  onClick={nextPage}
+                  disabled={pagination.page === pagination.pages}
                 >
-                  View Details →
+                  Next →
                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -137,7 +216,6 @@ const styles = {
     flexDirection: "column",
     fontFamily: "system-ui, sans-serif",
   },
-
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -169,7 +247,6 @@ const styles = {
     fontSize: "13px",
     cursor: "pointer",
   },
-
   content: {
     flex: 1,
     padding: "32px 24px",
@@ -184,19 +261,13 @@ const styles = {
     margin: "0 0 8px",
   },
   subtitle: { fontSize: "15px", color: theme.textMuted, margin: "0 0 32px" },
-
   loading: {
     color: theme.textSecondary,
     fontSize: "16px",
     textAlign: "center",
     padding: "60px 0",
   },
-
-  empty: {
-    textAlign: "center",
-    padding: "60px 0",
-    color: theme.textMuted,
-  },
+  empty: { textAlign: "center", padding: "60px 0", color: theme.textMuted },
   emptyIcon: { fontSize: "48px", display: "block", marginBottom: "16px" },
   planBtn: {
     marginTop: "16px",
@@ -209,7 +280,6 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
   },
-
   tripList: { display: "flex", flexDirection: "column", gap: "16px" },
   tripCard: {
     background: theme.bgSecondary,
@@ -263,8 +333,40 @@ const styles = {
     color: theme.accentBlue,
     fontSize: "13px",
     cursor: "pointer",
-    ":hover": { background: "rgba(37, 99, 235, 0.1)" },
   },
+  // Pagination styles
+  paginationWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "24px",
+    marginTop: "32px",
+    paddingTop: "24px",
+    borderTop: `1px solid ${theme.borderDefault}`,
+  },
+  paginationBtn: {
+    padding: "10px 20px",
+    background: "transparent",
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "8px",
+    color: theme.textPrimary,
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  paginationInfo: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "4px",
+  },
+  paginationText: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: theme.textPrimary,
+  },
+  paginationTotal: { fontSize: "12px", color: theme.textMuted },
 };
 
 export default TripHistoryPage;

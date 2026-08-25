@@ -21,13 +21,13 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict", //better to be lax
+    sameSite: "lax", //better to be lax
     maxAge: 15 * 60 * 1000, // 15 minutes
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "strict", //better to be lax
+    sameSite: "lax", //better to be lax
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
   });
 };
@@ -56,9 +56,9 @@ const getSecurityData = (req) => {
 
 //endpoints controllers
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   try {
-    const { name, email, password, role, vehicleType } = req.body;
+    const { name, email, password, vehicleType } = req.body;
     // checkout user existnas
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -68,9 +68,8 @@ const register = async (req, res) => {
       name,
       email,
       password,
-      role,
-      vehicleType,
       role: "individual",
+      vehicleType,
     });
 
     const accessToken = generateAccessToken(user._id);
@@ -108,13 +107,13 @@ const register = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
 // company registration — creates the Company doc + the company_admin user together.
 // the admin is admin-only: manages/monitors the fleet, never drives themselves.
-const registerCompany = async (req, res) => {
+const registerCompany = async (req, res, next) => {
   try {
     const { companyName, industry, adminName, email, password } = req.body;
 
@@ -174,14 +173,14 @@ const registerCompany = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
 //login endpoint
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ msg: "invalid credntials" });
@@ -228,13 +227,13 @@ const login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
 // recreate the accesstoken by the refreshtoken
 //and security traps
-const refresh = async (req, res) => {
+const refresh = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
     if (!token) return res.status(401).json({ msg: "no refresh token" });
@@ -321,11 +320,11 @@ const refresh = async (req, res) => {
 
     res.status(200).json({ msg: "token refreshed" });
   } catch (err) {
-    res.status(401).json({ message: "invalid or expired refresh token" });
+    next(err);
   }
 };
 //logout endpoint
-const logout = async (req, res) => {
+const logout = async (req, res, next) => {
   try {
     const token = req.cookies.refreshToken;
     if (token) {
@@ -352,7 +351,7 @@ const logout = async (req, res) => {
   }
 };
 
-const getMe = async (req, res) => {
+const getMe = async (req, res, next) => {
   try {
     res.status(200).json({
       success: true,
@@ -366,7 +365,7 @@ const getMe = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ msg: err.message });
+    next(err);
   }
 };
 

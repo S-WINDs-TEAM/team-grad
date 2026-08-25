@@ -5,8 +5,13 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { rateLimit } = require("express-rate-limit");
 
-//file req routes
+// Security Layer
+const helmet = require("helmet");
+// const mongoSanitize = require('express-mongo-sanitize');
+
+// file req routes
 const authRoutes = require("./routes/authRoutes");
 const routeRoutes = require("./routes/routeRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
@@ -15,13 +20,31 @@ const adRoutes = require("./routes/adRoutes");
 const errorHandler = require("./middlewares/errorMiddleware");
 const geocodeRoutes = require("../src/routes/geocodeRoutes");
 const alertRoutes = require("./routes/alertRoutes");
+const briefingRoutes = require("./routes/briefingRoutes");
+const mockTrackingRoutes = require("./routes/mockTrackingRoutes");
+const fleetAdminRoutes = require("./routes/fleetAdminRoutes");
+const requestRoutes = require("./routes/requestRoutes");
+const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
-//middlewares
-app.use(express.json());
+// Helmet — sets secure HTTP headers (X-Content-Type-Options,
+//    X-Frame-Options, CSP, etc.). First middleware so every response
+//    carries the security headers.
+app.use(
+  helmet({
+    // allow inline styles/scripts in dev (Vite injects them); tighten in prod
+    contentSecurityPolicy:
+      process.env.NODE_ENV === "production" ? undefined : false,
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+// Body parsing + cookies (before any route that reads req.body)
+app.use(express.json({ limit: "1mb" })); // cap body size against abuse
 app.use(cookieParser());
 
+// CORS — keep the existing dynamic origin logic untouched
 // BUG FIX: the old config hardcoded origin: 'http://localhost:5173'.
 // cors() only allows that EXACT origin. If the browser loads the app from
 // ANY other origin (127.0.0.1:5173, a LAN IP, [::1], or the
@@ -48,6 +71,58 @@ app.use(
   }),
 );
 
+// Manual body sanitizer — replaces express-mongo-sanitize which breaks on
+// Express 5 (req.query / req.params are getters, not settable).
+// We only sanitize req.body, which is where user input actually comes from.
+app.use((req, res, next) => {
+  const strip$ = (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith("$") || key.includes(".")) {
+        delete obj[key];
+      } else if (typeof obj[key] === "object" && obj[key] !== null) {
+        strip$(obj[key]);
+      }
+    }
+  };
+  if (req.body) strip$(req.body);
+  next();
+});
+
+// Global API rate limit — 100 req / 15 min per IP on /api/*
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10000,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  message: { success: false, msg: "too many requests, please slow down" },
+});
+// 23 8 2026
+
+// app.use('/api', apiLimiter);
+
+// 6) Strict brute-force limiter on auth endpoints — 10 attempts / 15 min.
+//    MUST be registered BEFORE the auth routes so it runs first.
+//    During demo rehearsals you can temporarily raise this to 50 if you
+//    keep re-logging to show different flows.
+const authLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  limit: 1000,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  ipv6Subnet: 56,
+  skipSuccessfulRequests: true, // successful logins don't count against the quota
+  message: {
+    success: false,
+    msg: "too many login attempts, please try again after 15 minutes",
+  },
+});
+//23 8 2026 STOP LIMITER
+// app.use('/api/auth/login', authLimiter);
+// app.use('/api/auth/register', authLimiter);
+// app.use('/api/auth/register-company', authLimiter);
+
 // serves uploaded profile/vehicle photos, e.g. GET /uploads/171234-abc.jpg — see uploadMiddleware.js
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
@@ -59,31 +134,19 @@ app.use("/api/fleet", fleetRoutes);
 app.use("/api/ads", adRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/briefing", briefingRoutes);
+app.use("/api/fleet", mockTrackingRoutes);
+app.use("/api/fleet-admin", fleetAdminRoutes);
+app.use("/api/requests", requestRoutes);
+app.use("/api/chat", chatRoutes);
 
+app.use("/api/test", require("./routes/testRoutes"));
 app.get("/", (req, res) => {
   res.status(200).json({ msg: "wind api is ruunnig" });
 });
 
 app.use(errorHandler);
+
 console.log("server end calling app");
 
 module.exports = app;
-
-// const PORT = process.env.PORT || 6000;
-
-// app.listen(PORT, ()=>{
-//     console.log(`server is powerd on port: ${PORT}`);
-// });
-
-// الكارثة: المتصفح يطلعلك CORS error (الفرونت مش عارف يتواصل).
-// العلامة: في الـ Network بقى blocked by CORS policy.
-// الحل: تأكد إن origin في cors() مظبوط على الرابط اللي شغال عليه الفرونت بالظبط (من غير / في الآخر).
-
-// الكارثة: req.body دايمًا فاضي (undefined) رغم إنك باعت بيانات.
-// العلامة: الـ API بتاعك بيرجع undefined.
-// الحل: تأكد إن الـ app.use(express.json()) مكتوب قبل الـ Routes، مش بعدها.
-
-// مساحة التطور والتوسعة (Scale & Extend)
-// لو المشروع كبر: هتحتاج تضيف helmet (يخفي هوية السيرفر للأمان) و express-rate-limit (يحدد عدد الطلبات لكل IP عشان محدش يضرب السيرفر). هتكتبهم كـ app.use قبل الـ Routes.
-
-// لو عندك 50 Route: مش هتفضل تكتب app.use لكل واحد. هتعمل fs.readdirSync تقرأ مجلد routes وتضيفهم أوتوماتيكياً. لكن الوقت الحالي، الكتابة اليدوية أوضح للفهم.

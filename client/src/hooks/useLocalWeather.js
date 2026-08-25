@@ -10,7 +10,7 @@ const useLocalWeather = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // if (locLoading) return;
+    if (locLoading) return;
 
     if (locError) {
       setError(locError);

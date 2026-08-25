@@ -1,5 +1,27 @@
 const ngeohash = require("ngeohash");
 
+// NEW: physical profiles (Cd & frontalArea per class) — aliased to avoid
+// clashing with the legacy getVehicleProfile defined in this file
+const { getVehicleProfile: getPhysicalProfile } = require("./vehicleProfiles");
+const { VEHICLE_PROFILES } = require("./vehicleProfiles");
+
+// Resolve the physical profile for the 6 vehicle classes, falling back to the
+// legacy getVehicleProfile for old values (car/truck/motorcycle/bus).
+const resolveProfile = (vehicleType, vehicleHeight = "medium") => {
+  const heightFactor =
+    vehicleHeight === "high" ? 0.8 : vehicleHeight === "medium" ? 0.6 : 0.4;
+  if (VEHICLE_PROFILES[vehicleType]) {
+    const p = VEHICLE_PROFILES[vehicleType];
+    return {
+      baseSpeed: p.baseSpeed,
+      windSensitivity: p.windSensitivity,
+      heightFactor,
+      fuelEfficiency: p.fuelEfficiency,
+    };
+  }
+  return getVehicleProfile(vehicleType, vehicleHeight); // legacy
+};
+
 // FIX: إضافة معامل vehicleHeight لتحسين تأثير الرياح على المركبات المختلفة
 const encodeGeohash = (lat, lng, precision = 5) => {
   return ngeohash.encode(lat, lng, precision);
@@ -64,7 +86,7 @@ const calculateMaxSafeSpeed = (
   const { condition, windSpeed, visibility, precipitation } = weatherData;
 
   // جلب خصائص المركبة
-  const profile = getVehicleProfile(vehicleType, vehicleHeight);
+  const profile = resolveProfile(vehicleType, vehicleHeight);
   let speedLimit = profile.baseSpeed;
 
   // 1. تأثير الرؤية (متدرج حسب شدة الضباب/العواصف)
@@ -157,7 +179,9 @@ const calculateRiskLevel = (
   return "low";
 };
 
-// NEW: حساب تأثير الرياح على استهلاك الوقود
+// IMPROVED (credibility fix): fuel impact now reads per-class Cd & frontalArea
+// from vehicleProfiles, and reports ONLY the wind-induced extra fuel,
+// converted with documented physical constants (no magic factors).
 const calculateFuelImpact = (
   weatherData,
   vehicleType,
@@ -165,31 +189,42 @@ const calculateFuelImpact = (
   speed,
 ) => {
   const { windSpeed, windDirection } = weatherData;
-  const profile = getVehicleProfile(vehicleType, vehicleHeight);
+  const physical = getPhysicalProfile(vehicleType);
 
-  // تحويل اتجاه الرياح إلى زاوية (رياح معاكسة = 180 درجة)
+  // documented physical constants
+  const rho = 1.225; // air density (kg/m3)
+  const ENGINE_EFFICIENCY = 0.3; // typical gasoline engine efficiency
+  const FUEL_ENERGY_J_PER_L = 34.2e6; // gasoline energy density (J/L)
+
+  // per-class aerodynamic properties (no more hardcoded guesses)
+  const cd = physical.cd;
+  const frontalArea = physical.frontalArea;
+
+  // headwind component (positive = against the vehicle)
   const windAngleRad = (windDirection || 0) * (Math.PI / 180);
-  const headwindComponent = windSpeed * Math.cos(windAngleRad);
+  const headwindComponent = (windSpeed || 0) * Math.cos(windAngleRad);
 
-  // قوة السحب الهوائي: F_drag = 0.5 * ρ * Cd * A * V²
-  const rho = 1.225; // كثافة الهواء (كجم/م³)
-  const cd = 0.35; // معامل السحب التقريبي
-  const frontalArea =
-    vehicleType === "truck" ? 8.0 : vehicleType === "motorcycle" ? 0.6 : 2.2;
-  const relativeWindSpeed = speed + headwindComponent; // السرعة النسبية للرياح
+  const v = speed || 90; // vehicle speed (km/h)
+  const vMs = v / 3.6;
+  const relWithWind = Math.max(0, v + headwindComponent) / 3.6;
+  const relNoWind = vMs;
 
-  // FIX: استخدام معادلة فيزيائية مبسطة لتأثير الرياح على الوقود
-  const dragForce =
-    0.5 * rho * cd * frontalArea * Math.pow(relativeWindSpeed / 3.6, 2);
-  const dragPower = dragForce * (speed / 3.6);
+  // aerodynamic drag with wind vs without wind
+  const dragWithWind = 0.5 * rho * cd * frontalArea * relWithWind * relWithWind;
+  const dragNoWind = 0.5 * rho * cd * frontalArea * relNoWind * relNoWind;
 
-  // تحويل القدرة إلى استهلاك وقود إضافي (لتر/100 كم)
-  const extraFuelPer100km = (dragPower / 1000) * 0.05;
+  // extra power the engine must deliver BECAUSE of the wind
+  const extraPower = Math.max(0, dragWithWind - dragNoWind) * vMs; // Watts
+
+  // convert extra power → extra fuel per 100km at this speed
+  const secondsPer100km = 100000 / vMs;
+  const extraFuelPer100km =
+    (extraPower / (ENGINE_EFFICIENCY * FUEL_ENERGY_J_PER_L)) * secondsPer100km;
 
   return {
     extraFuelPer100km: Math.round(extraFuelPer100km * 10) / 10,
     headwindComponent: Math.round(headwindComponent),
-    dragForce: Math.round(dragForce),
+    dragForce: Math.round(dragWithWind),
   };
 };
 

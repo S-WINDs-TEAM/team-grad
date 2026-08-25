@@ -966,7 +966,7 @@ function Bottom() {
     </footer>
   );
 }
-function Dashboard() {
+function TestDashboard() {
   const [selected, setSelected] = useState(vehicles[4]);
   return (
     <>
@@ -992,4 +992,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default TestDashboard;

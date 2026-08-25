@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getRiskColor, getRiskLabel } from "../utils/riskColors";
-import { interpretWeather } from "../utils/riskTranslator"; // NEW
+import { interpretWeather } from "../utils/riskTranslator";
 
 const WaypointCard = ({
   waypoint,
@@ -19,7 +19,6 @@ const WaypointCard = ({
     minute: "2-digit",
   });
 
-  // NEW: Get interpreted insights
   const interpretation = interpretWeather(
     waypoint.weather,
     vehicleType,
@@ -41,7 +40,19 @@ const WaypointCard = ({
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
-  // We'll still keep the raw weather details for the expandable section, but we'll show them in a more readable format.
+  // Score color based on risk level (blue for display, but tinted by risk)
+  const getScoreColor = (score) => {
+    if (score >= 65)
+      return { bg: "rgba(239,68,68,0.15)", border: "#EF4444", text: "#EF4444" };
+    if (score >= 35)
+      return {
+        bg: "rgba(245,158,11,0.15)",
+        border: "#F59E0B",
+        text: "#F59E0B",
+      };
+    return { bg: "rgba(16,185,129,0.15)", border: "#10B981", text: "#10B981" };
+  };
+
   const rawDetails = [
     { label: "Temperature", value: `${waypoint.weather.temperature}°C` },
     { label: "Feels Like", value: `${waypoint.weather.feelsLike}°C` },
@@ -64,7 +75,10 @@ const WaypointCard = ({
       style={{
         ...styles.card,
         borderLeft: `4px solid ${color}`,
-        boxShadow: isFirst || isLast ? `0 0 16px ${color}33` : "none",
+        boxShadow:
+          isFirst || isLast
+            ? `0 0 20px ${color}44`
+            : "0 2px 8px rgba(0,0,0,0.2)",
         cursor: "pointer",
       }}
       onClick={toggleExpand}
@@ -82,17 +96,60 @@ const WaypointCard = ({
         </div>
         <div style={styles.middle}>
           <p style={styles.condition}>{waypoint.weather.condition}</p>
-          <p style={styles.summary}>{summary}</p> {/* NEW: show summary */}
+          <p style={styles.summary}>{summary}</p>
         </div>
-        <div style={{ ...styles.badge, color, borderColor: color }}>
+
+        {/* Risk Level Badge */}
+        <div
+          style={{
+            ...styles.badge,
+            color,
+            borderColor: color,
+            background: `${color}15`,
+          }}
+        >
           {label}
         </div>
+
+        {/* Composite Score Badge (Unit D) */}
+        {waypoint.riskScore != null &&
+          (() => {
+            const scoreColors = getScoreColor(waypoint.riskScore);
+            return (
+              <div
+                style={{
+                  ...styles.scoreBadge,
+                  background: scoreColors.bg,
+                  borderColor: scoreColors.border,
+                  color: scoreColors.text,
+                }}
+              >
+                <span style={styles.scoreNumber}>{waypoint.riskScore}</span>
+                <span style={styles.scoreMax}>/100</span>
+              </div>
+            );
+          })()}
+
         <span style={styles.expandIcon}>{isExpanded ? "▲" : "▼"}</span>
       </div>
 
-      {/* Expanded section – shows detailed interpretation and raw data */}
+      {/* Expanded section */}
       {isExpanded && (
         <div style={styles.details}>
+          {/* Fuel Impact Banner (Unit D) — prominent when present */}
+          {waypoint.fuelImpact?.extraFuelPer100km != null &&
+            waypoint.fuelImpact.extraFuelPer100km > 0 && (
+              <div style={styles.fuelBanner}>
+                <span style={styles.fuelIcon}>⛽</span>
+                <div style={styles.fuelContent}>
+                  <span style={styles.fuelLabel}>Extra Fuel Consumption</span>
+                  <span style={styles.fuelValue}>
+                    +{waypoint.fuelImpact.extraFuelPer100km} L/100km
+                  </span>
+                </div>
+              </div>
+            )}
+
           {/* Interpretation summary */}
           <div style={styles.interpretationBlock}>
             <div style={styles.interpretationTitle}>📋 Assessment</div>
@@ -114,7 +171,7 @@ const WaypointCard = ({
             ))}
           </div>
 
-          {/* Raw data (optional, collapsed) */}
+          {/* Raw data */}
           <div style={styles.rawDataBlock}>
             <span style={styles.rawDataTitle}>📊 Raw Data</span>
             <div style={styles.rawDataGrid}>
@@ -139,11 +196,10 @@ const WaypointCard = ({
   );
 };
 
-// Styles – add new styles for the interpretation parts
 const styles = {
   card: {
     background: "#11151c",
-    borderRadius: "10px",
+    borderRadius: "12px",
     borderLeft: "4px solid",
     marginBottom: "8px",
     transition: "all 0.3s ease",
@@ -153,28 +209,57 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "12px",
-    padding: "12px 16px",
+    padding: "14px 16px",
   },
   left: { display: "flex", flexDirection: "column", minWidth: "80px" },
-  km: { color: "#fff", fontSize: "0.8rem", fontWeight: "600" },
-  time: { color: "#8a93a3", fontSize: "0.65rem", textTransform: "uppercase" },
-  icon: { fontSize: "1.6rem" },
+  km: { color: "#fff", fontSize: "0.85rem", fontWeight: "700" },
+  time: {
+    color: "#8a93a3",
+    fontSize: "0.65rem",
+    textTransform: "uppercase",
+    marginTop: "2px",
+  },
+  icon: { fontSize: "1.8rem" },
   middle: { flex: 1 },
   condition: {
     color: "#fff",
-    fontSize: "0.85rem",
+    fontSize: "0.9rem",
     fontWeight: "600",
     margin: 0,
     textTransform: "capitalize",
   },
-  summary: { color: "#94a3b8", fontSize: "0.75rem", margin: "2px 0 0 0" },
+  summary: {
+    color: "#94a3b8",
+    fontSize: "0.75rem",
+    margin: "3px 0 0 0",
+    lineHeight: "1.4",
+  },
   badge: {
     fontSize: "0.65rem",
     fontWeight: "700",
-    padding: "4px 10px",
+    padding: "5px 10px",
     borderRadius: "6px",
     border: "1px solid",
-    background: "transparent",
+    letterSpacing: "0.5px",
+  },
+  scoreBadge: {
+    display: "flex",
+    alignItems: "baseline",
+    padding: "5px 10px",
+    borderRadius: "6px",
+    border: "1px solid",
+    fontWeight: "800",
+    letterSpacing: "0.5px",
+  },
+  scoreNumber: {
+    fontSize: "0.85rem",
+    fontWeight: "800",
+  },
+  scoreMax: {
+    fontSize: "0.6rem",
+    fontWeight: "600",
+    opacity: 0.7,
+    marginLeft: "1px",
   },
   expandIcon: { color: "#8a93a3", fontSize: "0.8rem", padding: "4px" },
   details: {
@@ -183,86 +268,135 @@ const styles = {
     background: "rgba(255,255,255,0.02)",
     display: "flex",
     flexDirection: "column",
+    gap: "14px",
+  },
+  // Unit D: Fuel impact banner
+  fuelBanner: {
+    display: "flex",
+    alignItems: "center",
     gap: "12px",
+    background:
+      "linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 100%)",
+    border: "1px solid rgba(245,158,11,0.4)",
+    borderRadius: "10px",
+    padding: "12px 16px",
+  },
+  fuelIcon: {
+    fontSize: "1.4rem",
+  },
+  fuelContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+  },
+  fuelLabel: {
+    color: "#F59E0B",
+    fontSize: "0.7rem",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+  },
+  fuelValue: {
+    color: "#fff",
+    fontSize: "1rem",
+    fontWeight: "700",
   },
   interpretationBlock: {
-    background: "rgba(255,255,255,0.04)",
-    padding: "10px 14px",
-    borderRadius: "8px",
-    borderLeft: "3px solid #3b82f6",
+    background: "rgba(59,130,246,0.08)",
+    padding: "12px 16px",
+    borderRadius: "10px",
+    borderLeft: "4px solid #3b82f6",
   },
   interpretationTitle: {
     color: "#94a3b8",
     fontSize: "0.7rem",
     textTransform: "uppercase",
-    marginBottom: "4px",
+    marginBottom: "6px",
+    letterSpacing: "0.5px",
   },
-  interpretationText: { color: "#fff", fontSize: "0.85rem", margin: 0 },
+  interpretationText: {
+    color: "#fff",
+    fontSize: "0.85rem",
+    margin: 0,
+    lineHeight: "1.5",
+  },
   recommendationBlock: {
     display: "flex",
     gap: "6px",
-    marginTop: "6px",
+    marginTop: "8px",
     flexWrap: "wrap",
   },
   recommendationLabel: {
     color: "#10b981",
     fontSize: "0.75rem",
-    fontWeight: "600",
+    fontWeight: "700",
   },
-  recommendationText: { color: "#94a3b8", fontSize: "0.75rem" },
+  recommendationText: {
+    color: "#cbd5e1",
+    fontSize: "0.75rem",
+    lineHeight: "1.4",
+  },
   detailsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
     gap: "8px",
   },
   detailItem: {
     display: "flex",
     flexDirection: "column",
-    background: "rgba(255,255,255,0.03)",
-    padding: "6px 10px",
-    borderRadius: "4px",
-    borderLeft: "2px solid #2a2f3a",
+    background: "rgba(255,255,255,0.04)",
+    padding: "8px 12px",
+    borderRadius: "8px",
+    borderLeft: "3px solid #2a2f3a",
   },
   detailLabel: {
     color: "#8a93a3",
-    fontSize: "0.6rem",
+    fontSize: "0.65rem",
     textTransform: "uppercase",
+    letterSpacing: "0.5px",
   },
-  detailValue: { color: "#fff", fontSize: "0.75rem", fontWeight: "500" },
-  detailAction: { color: "#f59e0b", fontSize: "0.65rem", marginTop: "2px" },
+  detailValue: {
+    color: "#fff",
+    fontSize: "0.8rem",
+    fontWeight: "500",
+    margin: "2px 0",
+  },
+  detailAction: { color: "#f59e0b", fontSize: "0.7rem", marginTop: "3px" },
   rawDataBlock: {
-    marginTop: "8px",
+    marginTop: "4px",
     borderTop: "1px solid #1a1f2a",
-    paddingTop: "10px",
+    paddingTop: "12px",
   },
   rawDataTitle: {
     color: "#64748b",
-    fontSize: "0.65rem",
+    fontSize: "0.7rem",
     textTransform: "uppercase",
     display: "block",
-    marginBottom: "6px",
+    marginBottom: "8px",
+    letterSpacing: "0.5px",
   },
   rawDataGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-    gap: "4px",
+    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+    gap: "6px",
   },
   rawDataItem: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "2px 0",
+    padding: "4px 8px",
     borderBottom: "1px solid #1a1f2a",
   },
-  rawDataLabel: { color: "#64748b", fontSize: "0.6rem" },
-  rawDataValue: { color: "#94a3b8", fontSize: "0.6rem" },
+  rawDataLabel: { color: "#64748b", fontSize: "0.65rem" },
+  rawDataValue: { color: "#94a3b8", fontSize: "0.65rem", fontWeight: "500" },
   vehicleInfo: {
-    marginTop: "12px",
+    marginTop: "8px",
     paddingTop: "12px",
     borderTop: "1px solid #2a2f3a",
     display: "flex",
     justifyContent: "space-between",
     color: "#8a93a3",
-    fontSize: "0.75rem",
+    fontSize: "0.8rem",
+    fontWeight: "500",
   },
 };
 

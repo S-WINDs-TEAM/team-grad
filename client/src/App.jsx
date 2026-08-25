@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
-import Register from "./pages/Register";
+// import Register from "./pages/Register";
+// import TestDashboard from "./pages/TestDashboard";
 import HomePage from "./pages/HomePage";
 import PlanTripPage from "./pages/PlanTripPage";
 import LandingPage from "./pages/LandingPage";
@@ -19,18 +20,24 @@ import FleetRouteComparisonPage from "./pages/FleetDashboard/FleetRouteCompariso
 import FleetVehicleListPage from "./pages/FleetDashboard/FleetVehicleListPage";
 import FleetSettingsPage from "./pages/FleetDashboard/FleetSettingsPage";
 import NotFound from "./pages/NotFound";
+import RegisterPage from "./pages/RegisterPage";
+import TestPage from "./pages/TestPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import BriefingPage from "./pages/BriefingPage";
 
 function App() {
   return (
     <>
       <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       <Routes>
-        //login
+        {/* Public landing */}
         <Route index element={<LandingPage />} />
+        {/* Auth routes */}
         <Route path="/login" element={<LoginPage />} />
         //register
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/accept-invite/:token" element={<AcceptInvitePage />} />
+        {/* Fleet routes */}
         <Route
           path="/fleet"
           element={
@@ -58,7 +65,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        //home
+        {/* Individual routes */}
         <Route
           path="/home"
           element={
@@ -67,7 +74,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        //history page
         <Route
           path="/history"
           element={
@@ -76,12 +82,37 @@ function App() {
             </ProtectedRoute>
           }
         />
-        /plan and results
         <Route
           path="/plan"
           element={
             <ProtectedRoute>
               <PlanTripPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/test"
+          element={
+            <ProtectedRoute>
+              <TestPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* Analytics (basic charts for the manager & individual) */}
+        <Route
+          path="/analytics"
+          element={
+            <ProtectedRoute>
+              <AnalyticsPage />
+            </ProtectedRoute>
+          }
+        />
+        {/* briefing routes  */}
+        <Route
+          path="/briefing"
+          element={
+            <ProtectedRoute>
+              <BriefingPage />
             </ProtectedRoute>
           }
         />
@@ -91,6 +122,7 @@ function App() {
          <RouteResultsPage/> 
          </ProtectedRoute>}/> */}
         //main
+        {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

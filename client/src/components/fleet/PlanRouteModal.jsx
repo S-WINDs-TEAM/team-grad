@@ -1,63 +1,84 @@
-import LocationAutocomplete from '../LocationAutocomplete';
-import { styles } from './FleetDashboard.styles';
+import LocationAutocomplete from "../LocationAutocomplete";
+import { styles } from "./FleetDashboard.styles";
 
 const PlanRouteModal = ({
-    show,
-    onClose,
-    vehiclePlate,
-    origin,
-    setOrigin,
-    destination,
-    setDestination,
-    departureTime,
-    setDepartureTime,
-    onPlan,
-    planning,
+  show,
+  onClose,
+  vehiclePlate,
+  origin,
+  setOrigin,
+  destination,
+  setDestination,
+  departureTime,
+  setDepartureTime,
+  cargoType, // 🆕 NEW
+  setCargoType, // 🆕 NEW
+  onPlan,
+  planning,
 }) => {
-    if (!show) return null;
+  if (!show) return null;
 
-    return (
-        <div style={styles.modalOverlay} onClick={onClose}>
-            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <div style={styles.modalHeader}>
-                    <h3 style={styles.modalTitle}>Plan Route for {vehiclePlate}</h3>
-                    <button style={styles.modalClose} onClick={onClose}>✕</button>
-                </div>
-
-                <div style={styles.modalBody}>
-                    <LocationAutocomplete
-                        label="Departure Location"
-                        placeholder="Type a city or address..."
-                        onSelect={setOrigin}
-                    />
-
-                    <LocationAutocomplete
-                        label="Destination Location"
-                        placeholder="Type a city or address..."
-                        onSelect={setDestination}
-                    />
-
-                    <div style={styles.field}>
-                        <label style={styles.label}>Departure Time</label>
-                        <input
-                            style={styles.input}
-                            type="datetime-local"
-                            value={departureTime}
-                            onChange={(e) => setDepartureTime(e.target.value)}
-                        />
-                    </div>
-
-                    <button
-                        style={styles.modalSubmitBtn}
-                        onClick={onPlan}
-                        disabled={planning}
-                    >
-                        {planning ? 'Planning...' : '🗺️ Calculate Route'}
-                    </button>
-                </div>
-            </div>
+  return (
+    <div style={styles.modalOverlay} onClick={onClose}>
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h3 style={styles.modalTitle}>Plan Route for {vehiclePlate}</h3>
+          <button style={styles.modalClose} onClick={onClose}>
+            ✕
+          </button>
         </div>
-    );
+
+        <div style={styles.modalBody}>
+          <LocationAutocomplete
+            label="Departure Location"
+            placeholder="Type a city or address..."
+            onSelect={setOrigin}
+          />
+
+          <LocationAutocomplete
+            label="Destination Location"
+            placeholder="Type a city or address..."
+            onSelect={setDestination}
+          />
+
+          <div style={styles.field}>
+            <label style={styles.label}>Departure Time</label>
+            <input
+              style={styles.input}
+              type="datetime-local"
+              value={departureTime}
+              onChange={(e) => setDepartureTime(e.target.value)}
+            />
+          </div>
+
+          {/* 🆕 NEW: Cargo Type Selector */}
+          <div style={styles.field}>
+            <label style={styles.label}>Cargo Type</label>
+            <select
+              style={styles.input}
+              value={cargoType || "general"}
+              onChange={(e) => setCargoType(e.target.value)}
+            >
+              <option value="general">General</option>
+              <option value="perishable">Perishable (food, flowers)</option>
+              <option value="pharmaceutical">Pharmaceutical (medicines)</option>
+              <option value="electronics">Electronics</option>
+              <option value="chemicals">Chemicals</option>
+              <option value="fragile">Fragile (glass, ceramics)</option>
+            </select>
+          </div>
+
+          <button
+            style={styles.modalSubmitBtn}
+            onClick={onPlan}
+            disabled={planning}
+          >
+            {planning ? "Planning..." : "🗺️ Calculate Route"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default PlanRouteModal;

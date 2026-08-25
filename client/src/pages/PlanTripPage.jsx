@@ -1,668 +1,736 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import useAuth from "../hooks/useAuth";
+import { setCurrentTrip } from "../store/tripSlice";
 import {
   planRouteApi,
-  smartDepartureApi,
   getTripByIdApi,
+  smartDepartureApi,
 } from "../api/routeApi";
 import { getAdsRecommendationsApi } from "../api/adsApi";
 import LocationAutocomplete from "../components/LocationAutocomplete";
-import RouteLoadingSkeleton from "../components/routeLoadingSkeleton";
 import MapView from "../components/MapView";
 import WaypointCard from "../components/WaypointCard";
-import {
-  setCurrentTrip,
-  setLoading,
-  setError,
-  clearCurrentTrip,
-} from "../store/tripSlice";
-import { interpretWeather } from "../utils/riskTranslator";
+import RouteLoadingSkeleton from "../components/routeLoadingSkeleton";
+import { theme } from "../styles/theme";
 
-const RAIN_CONDITIONS = ["rain", "drizzle", "heavy_rain", "thunderstorm"];
-
-const TripPlannerPage = () => {
-  const {
-    handleSubmit,
-    formState: { isSubmitting },
-    watch,
-    setValue,
-  } = useForm({
-    defaultValues: { vehicleType: "car" },
-  });
-  const [origin, setOrigin] = useState(null);
-  const [destination, setDestination] = useState(null);
-  const [localError, setLocalError] = useState(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-  const [selectedVehicle, setSelectedVehicle] = useState("car");
-
-  // Smart Departure
-  const [showSmartDeparture, setShowSmartDeparture] = useState(false);
-  const [smartDepartureLoading, setSmartDepartureLoading] = useState(false);
-  const [smartDepartureSuggestions, setSmartDepartureSuggestions] =
-    useState(null);
-
-  // Ads / Nearby Stops
-  const [nearbyAds, setNearbyAds] = useState([]);
-
+const PlanTripPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { currentTrip, loading } = useSelector((state) => state.trip);
-  const vehicleType = watch("vehicleType");
-
-  // ================================================================
-  // NEW: Load trip from URL if ?tripId is present
-  // ================================================================
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const tripId = searchParams.get("tripId");
 
+  const { currentTrip } = useSelector((state) => state.trip);
+
+  const [origin, setOrigin] = useState(null);
+  const [destination, setDestination] = useState(null);
+  const [vehicleType, setVehicleType] = useState("car");
+  const [cargoType, setCargoType] = useState("general"); // 🆕 NEW
+  const [loading, setLoading] = useState(false);
+  const [alternateRoute, setAlternateRoute] = useState(null); // 🆕 NEW
+  const [smartDeparture, setSmartDeparture] = useState(null);
+  const [nearbyAds, setNearbyAds] = useState([]);
+
+  // Load trip from URL param
   useEffect(() => {
     if (tripId) {
       const loadTrip = async () => {
         try {
           const response = await getTripByIdApi(tripId);
-          const tripData = response.data.trip;
-
-          // tripData.waypoints is the full 5km array from the database
-          const fullWaypoints = tripData.waypoints || [];
-
-          // Compute a 30km sample from the full waypoints
-          let sampledWaypoints = [];
-          if (fullWaypoints.length > 0) {
-            const totalDistance =
-              fullWaypoints[fullWaypoints.length - 1]?.distanceFromStart || 0;
-            const targetCount = Math.max(2, Math.ceil(totalDistance / 30));
-            const step = Math.max(
-              1,
-              Math.floor(fullWaypoints.length / targetCount),
-            );
-            for (let i = 0; i < fullWaypoints.length; i += step) {
-              sampledWaypoints.push(fullWaypoints[i]);
-            }
-            // Ensure the last point is always included
-            const last = fullWaypoints[fullWaypoints.length - 1];
-            if (sampledWaypoints[sampledWaypoints.length - 1] !== last) {
-              sampledWaypoints.push(last);
-            }
-          }
-
-          // Set the trip in Redux with both summary (30km) and detailed (5km) waypoints
-          dispatch(
-            setCurrentTrip({
-              ...tripData,
-              waypoints: sampledWaypoints, // 30km summary
-              detailedWaypoints: fullWaypoints, // 5km full details
-            }),
-          );
-
-          // Fill the form fields so the user sees the route data
-          setOrigin(tripData.origin);
-          setDestination(tripData.destination);
-          setSelectedVehicle(tripData.vehicleType || "car");
-          setValue("vehicleType", tripData.vehicleType || "car");
+          const trip = response.data.trip;
+          dispatch(setCurrentTrip(trip));
+          setOrigin(trip.origin);
+          setDestination(trip.destination);
+          setVehicleType(trip.vehicleType || "car");
+          if (trip.cargoType) setCargoType(trip.cargoType); // 🆕 NEW
         } catch (err) {
-          toast.error("Could not load trip details");
+          toast.error("Could not load trip");
         }
       };
       loadTrip();
     }
-  }, [tripId, dispatch, setValue]);
+  }, [tripId, dispatch]);
 
-  // === handle vehicle type change ===
-  useEffect(() => {
-    setSelectedVehicle(vehicleType);
-  }, [vehicleType]);
-
-  // === onSubmit: plan a new route ===
-  const onSubmit = async () => {
+  const handlePlanRoute = async () => {
     if (!origin || !destination) {
-      setLocalError("Please select both departure and destination locations");
-      return;
+      return toast.error("Please select origin and destination");
     }
 
-    setLocalError(null);
-    setIsCalculating(true);
-    dispatch(setLoading(true));
-
+    setLoading(true);
     try {
-      const payload = { origin, destination, vehicleType };
-      const response = await planRouteApi(payload);
-      dispatch(setCurrentTrip(response.data.trip));
+      const response = await planRouteApi({
+        origin,
+        destination,
+        vehicleType,
+        departureTime: new Date().toISOString(),
+        cargoType, // 🆕 NEW: pass cargo type
+      });
+
+      const trip = response.data.trip;
+      dispatch(setCurrentTrip(trip));
+
+      // 🆕 NEW: Check if alternate route exists
+      if (response.data.alternateRoute) {
+        setAlternateRoute(response.data.alternateRoute);
+        toast.success(
+          "Route planned! Alternate route available due to weather hazard.",
+        );
+      } else {
+        setAlternateRoute(null);
+        toast.success("Route planned successfully!");
+      }
+
+      // Fetch nearby ads
+      if (destination?.lat && destination?.lng) {
+        try {
+          const adsResponse = await getAdsRecommendationsApi(
+            destination.lat,
+            destination.lng,
+          );
+          setNearbyAds(adsResponse.data.ads || []);
+        } catch (err) {
+          console.warn("Could not load nearby ads");
+        }
+      }
     } catch (err) {
-      const msg = err.response?.data?.msg || "Failed to plan route";
-      setLocalError(msg);
-      dispatch(setError(msg));
+      toast.error(err.response?.data?.msg || "Failed to plan route");
     } finally {
-      setIsCalculating(false);
-      dispatch(setLoading(false));
+      setLoading(false);
     }
   };
 
-  // === clear current trip ===
-  const handleNewTrip = () => {
-    dispatch(clearCurrentTrip());
-    setOrigin(null);
-    setDestination(null);
-    setShowSmartDeparture(false);
-    setSmartDepartureSuggestions(null);
-    setNearbyAds([]);
-  };
-
-  // === Smart Departure ===
   const handleSmartDeparture = async () => {
-    if (!origin || !destination) return;
-    setShowSmartDeparture(true);
-    setSmartDepartureLoading(true);
+    if (!origin || !destination) {
+      return toast.error("Please select origin and destination first");
+    }
+
     try {
       const response = await smartDepartureApi({
         origin,
         destination,
-        vehicleType: selectedVehicle,
+        vehicleType,
         windowHours: 6,
         intervalMinutes: 60,
       });
-      setSmartDepartureSuggestions(response.data.suggestions);
+      setSmartDeparture(response.data.suggestions);
+      toast.success("Smart departure suggestions ready!");
     } catch (err) {
-      setLocalError(
-        err.response?.data?.msg || "Failed to get smart departure suggestions",
-      );
-    } finally {
-      setSmartDepartureLoading(false);
+      toast.error("Could not get smart departure suggestions");
     }
   };
 
-  // === Nearby Stops (ads) ===
-  useEffect(() => {
-    if (!currentTrip || !destination) {
-      setNearbyAds([]);
-      return;
-    }
+  // 🆕 NEW: Accept alternate route
+  const handleAcceptAlternate = () => {
+    if (!alternateRoute) return;
 
-    const fetchAds = async () => {
-      try {
-        const lastWaypoint =
-          currentTrip.waypoints[currentTrip.waypoints.length - 1];
-        const w = lastWaypoint?.weather;
+    // Replace current route with alternate
+    dispatch(
+      setCurrentTrip({
+        ...currentTrip,
+        routePolyline: alternateRoute.polyline,
+        waypoints: alternateRoute.waypoints,
+        totalDistanceKm: alternateRoute.totalDistanceKm,
+        totalDurationMin: alternateRoute.totalDurationMin,
+        overallRiskLevel: alternateRoute.overallRiskLevel,
+      }),
+    );
 
-        let condition;
-        if (w) {
-          if (RAIN_CONDITIONS.includes(w.condition)) condition = "rain";
-          else if (w.temperature >= 35) condition = "heat";
-          else if (w.visibility < 2) condition = "dust";
-        }
-
-        const response = await getAdsRecommendationsApi({
-          lat: destination.lat,
-          lng: destination.lng,
-          condition,
-        });
-        setNearbyAds(response.data.ads);
-      } catch (err) {
-        setNearbyAds([]);
-      }
-    };
-    fetchAds();
-  }, [currentTrip, destination]);
-
-  // === Helpers for display ===
-  const trip = currentTrip;
-  const originFromTrip = trip?.origin || null;
-  const destinationFromTrip = trip?.destination || null;
-  const tripVehicleType = trip?.vehicleType || "car";
-
-  const getDisplayData = (waypoint) => {
-    if (!waypoint.speeds || !waypoint.risks) {
-      return {
-        maxSafeSpeed: waypoint.maxSafeSpeed,
-        riskLevel: waypoint.weather.riskLevel,
-      };
-    }
-    return {
-      maxSafeSpeed: waypoint.speeds[selectedVehicle] || waypoint.maxSafeSpeed,
-      riskLevel: waypoint.risks[selectedVehicle] || waypoint.weather.riskLevel,
-    };
+    setAlternateRoute(null); // Clear alternate after accepting
+    toast.success("Alternate route accepted!");
   };
 
-  const riskColor = (risk) =>
-    risk === "high" ? "#ff4d4d" : risk === "medium" ? "#f5a623" : "#d4ff00";
-  const adIcon = (type) =>
-    type === "rest" ? "🛌" : type === "wash" ? "🚿" : "⛽";
+  const handleNewTrip = () => {
+    setOrigin(null);
+    setDestination(null);
+    setVehicleType("car");
+    setCargoType("general"); // 🆕 NEW
+    setAlternateRoute(null); // 🆕 NEW
+    setSmartDeparture(null);
+    setNearbyAds([]);
+    dispatch(setCurrentTrip(null));
+  };
 
-  // ================================================================
-  // Render
-  // ================================================================
   return (
     <div style={styles.page}>
       <header style={styles.header}>
-        <span style={styles.logo} onClick={() => navigate("/")}>
-          ⚡ S-WINDS
-        </span>
-        <span style={styles.status}>● SYSTEM ONLINE</span>
+        <div style={styles.logo}>
+          <span style={styles.logoIcon}>◈</span>
+          <span style={styles.logoText}>S-WINDs</span>
+          <span style={styles.logoSubtext}>Plan Trip</span>
+        </div>
+        <button
+          style={styles.backBtn}
+          onClick={() =>
+            navigate(user?.role === "company_admin" ? "/fleet" : "/home")
+          }
+        >
+          ← Back
+        </button>
       </header>
 
-      <div style={styles.grid}>
-        {/* Left Panel: Form */}
-        <div style={styles.panel}>
-          <h2 style={styles.panelTitle}>Route Configuration</h2>
+      <div style={styles.content}>
+        <div style={styles.inputSection}>
+          <LocationAutocomplete
+            label="From"
+            placeholder="Enter starting location..."
+            onSelect={setOrigin}
+            defaultValue={origin?.address}
+          />
 
-          <form onSubmit={handleSubmit(onSubmit)} style={styles.form}>
-            <LocationAutocomplete
-              label="Departure Station"
-              placeholder="Type a city or address..."
-              onSelect={setOrigin}
-              defaultValue={originFromTrip?.address || ""}
+          <LocationAutocomplete
+            label="To"
+            placeholder="Enter destination..."
+            onSelect={setDestination}
+            defaultValue={destination?.address}
+          />
+
+          <div style={styles.optionsRow}>
+            <div style={styles.field}>
+              <label style={styles.label}>Vehicle Type</label>
+              <select
+                style={styles.select}
+                value={vehicleType}
+                onChange={(e) => setVehicleType(e.target.value)}
+              >
+                <option value="car">Car</option>
+                <option value="truck">Truck</option>
+                <option value="motorcycle">Motorcycle</option>
+              </select>
+            </div>
+
+            {/* 🆕 NEW: Cargo Type Selector */}
+            <div style={styles.field}>
+              <label style={styles.label}>Cargo Type</label>
+              <select
+                style={styles.select}
+                value={cargoType}
+                onChange={(e) => setCargoType(e.target.value)}
+              >
+                <option value="general">General</option>
+                <option value="perishable">Perishable</option>
+                <option value="pharmaceutical">Pharmaceutical</option>
+                <option value="electronics">Electronics</option>
+                <option value="chemicals">Chemicals</option>
+                <option value="fragile">Fragile</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={styles.buttonRow}>
+            <button
+              style={styles.planBtn}
+              onClick={handlePlanRoute}
+              disabled={loading || !origin || !destination}
+            >
+              {loading ? "Planning..." : "🗺️ Plan My Route"}
+            </button>
+
+            <button
+              style={styles.smartBtn}
+              onClick={handleSmartDeparture}
+              disabled={!origin || !destination}
+            >
+              ⚡ Smart Departure
+            </button>
+
+            <button style={styles.newBtn} onClick={handleNewTrip}>
+              🔄 New Trip
+            </button>
+          </div>
+        </div>
+
+        {loading && <RouteLoadingSkeleton />}
+
+        {/* 🆕 NEW: Alternate Route Banner */}
+        {alternateRoute && currentTrip && (
+          <div style={styles.alternateBanner}>
+            <div style={styles.alternateBannerContent}>
+              <div style={styles.alternateBannerIcon}>🔄</div>
+              <div style={styles.alternateBannerText}>
+                <div style={styles.alternateBannerTitle}>
+                  Alternate Route Available — Weather Hazard Detected
+                </div>
+                <div style={styles.alternateBannerComparison}>
+                  <div style={styles.comparisonItem}>
+                    <span style={styles.comparisonLabel}>Current Route:</span>
+                    <span style={styles.comparisonValue}>
+                      {currentTrip.totalDistanceKm?.toFixed(1)} km ·{" "}
+                      {Math.round(currentTrip.totalDurationMin)} min
+                    </span>
+                    <span
+                      style={{
+                        ...styles.comparisonRisk,
+                        color: theme.accentRed,
+                      }}
+                    >
+                      {currentTrip.overallRiskLevel?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={styles.comparisonItem}>
+                    <span style={styles.comparisonLabel}>Alternate Route:</span>
+                    <span style={styles.comparisonValue}>
+                      {alternateRoute.totalDistanceKm?.toFixed(1)} km ·{" "}
+                      {Math.round(alternateRoute.totalDurationMin)} min
+                    </span>
+                    <span
+                      style={{
+                        ...styles.comparisonRisk,
+                        color: theme.accentGreen,
+                      }}
+                    >
+                      {alternateRoute.overallRiskLevel?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button
+                style={styles.acceptAlternateBtn}
+                onClick={handleAcceptAlternate}
+              >
+                ✅ Accept Alternate
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentTrip && !loading && (
+          <>
+            <MapView
+              routePolyline={currentTrip.routePolyline}
+              waypoints={currentTrip.waypoints}
+              detailedWaypoints={currentTrip.detailedWaypoints}
+              origin={origin}
+              destination={destination}
+              vehicleType={vehicleType}
+              alternateRoute={alternateRoute} // 🆕 NEW
             />
 
-            <LocationAutocomplete
-              label="Destination Station"
-              placeholder="Type a city or address..."
-              onSelect={setDestination}
-              defaultValue={destinationFromTrip?.address || ""}
-            />
+            {/* Cargo + Fatigue Warnings Box */}
+            {(currentTrip.cargoAlerts?.length > 0 ||
+              currentTrip.fatigueInfo?.level === "warn" ||
+              currentTrip.fatigueInfo?.level === "critical") && (
+              <div style={styles.warningsBox}>
+                <div style={styles.warningsTitle}>⚠️ Important Warnings</div>
+                {currentTrip.cargoAlerts?.map((alert, i) => (
+                  <div key={i} style={styles.warningItem}>
+                    <span style={styles.warningIcon}>📦</span>
+                    <span style={styles.warningText}>{alert.message}</span>
+                  </div>
+                ))}
+                {(currentTrip.fatigueInfo?.level === "warn" ||
+                  currentTrip.fatigueInfo?.level === "critical") && (
+                  <div style={styles.warningItem}>
+                    <span style={styles.warningIcon}>😴</span>
+                    <span style={styles.warningText}>
+                      {currentTrip.fatigueInfo.message}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
-            <label style={styles.label}>Vehicle Class</label>
-            <div style={styles.vehicleRow}>
-              {["car", "truck", "motorcycle"].map((v) => (
-                <div
-                  key={v}
+            <div style={styles.summaryBox}>
+              <div style={styles.summaryItem}>
+                <span style={styles.summaryLabel}>Distance:</span>
+                <span style={styles.summaryValue}>
+                  {currentTrip.totalDistanceKm?.toFixed(1)} km
+                </span>
+              </div>
+              <div style={styles.summaryItem}>
+                <span style={styles.summaryLabel}>Duration:</span>
+                <span style={styles.summaryValue}>
+                  {Math.round(currentTrip.totalDurationMin)} min
+                </span>
+              </div>
+              <div style={styles.summaryItem}>
+                <span style={styles.summaryLabel}>Overall Risk:</span>
+                <span
                   style={{
-                    ...styles.vehicleOption,
-                    ...(selectedVehicle === v
-                      ? styles.vehicleOptionActive
-                      : {}),
-                  }}
-                  onClick={() => {
-                    setValue("vehicleType", v);
-                    setSelectedVehicle(v);
+                    ...styles.summaryValue,
+                    color:
+                      currentTrip.overallRiskLevel === "high"
+                        ? theme.accentRed
+                        : currentTrip.overallRiskLevel === "medium"
+                          ? theme.accentOrange
+                          : theme.accentGreen,
                   }}
                 >
-                  {v === "car" && "🚗 CAR"}
-                  {v === "truck" && "🚛 TRUCK"}
-                  {v === "motorcycle" && "🏍️ MOTORCYCLE"}
-                </div>
+                  {currentTrip.overallRiskLevel?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+
+            <div style={styles.waypointsSection}>
+              <h3 style={styles.sectionTitle}>Route Waypoints</h3>
+              {currentTrip.waypoints?.map((wp, i) => (
+                <WaypointCard
+                  key={i}
+                  waypoint={wp}
+                  index={i}
+                  isFirst={i === 0}
+                  isLast={i === currentTrip.waypoints.length - 1}
+                  vehicleType={vehicleType}
+                />
               ))}
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || isCalculating}
-              style={styles.button}
-            >
-              {isCalculating ? "Calculating Route..." : "▶ Plan My Route"}
-            </button>
-
-            {localError && <p style={styles.error}>{localError}</p>}
-          </form>
-
-          {trip && (
-            <>
-              <button
-                onClick={handleSmartDeparture}
-                disabled={smartDepartureLoading}
-                style={styles.smartDepartureBtn}
-              >
-                {smartDepartureLoading
-                  ? "Comparing departure times..."
-                  : "⚡ Smart Departure"}
-              </button>
-              <button onClick={handleNewTrip} style={styles.newTripBtn}>
-                + New Trip
-              </button>
-            </>
-          )}
-
-          {/* Smart Departure panel */}
-          {showSmartDeparture && (
-            <div style={styles.smartDeparturePanel}>
-              <div style={styles.smartDepartureHeader}>
-                <span style={styles.smartDepartureTitle}>Smart Departure</span>
-                <span
-                  style={styles.smartDepartureClose}
-                  onClick={() => setShowSmartDeparture(false)}
-                >
-                  ✕
-                </span>
-              </div>
-              <p style={styles.smartDepartureSub}>
-                Comparing departure times over the next 6 hours
-              </p>
-
-              {smartDepartureLoading && (
-                <p style={styles.smartDepartureSub}>Loading suggestions…</p>
-              )}
-
-              {!smartDepartureLoading &&
-                smartDepartureSuggestions?.map((s, i) => (
+            {/* Smart Departure Section */}
+            {smartDeparture && (
+              <div style={styles.smartDepartureSection}>
+                <h3 style={styles.sectionTitle}>
+                  ⚡ Smart Departure Suggestions
+                </h3>
+                {smartDeparture.map((suggestion, i) => (
                   <div
                     key={i}
                     style={{
-                      ...styles.suggestionRow,
-                      ...(s.isBest ? styles.suggestionRowBest : {}),
+                      ...styles.suggestionCard,
+                      borderColor: suggestion.isBest
+                        ? theme.accentGreen
+                        : theme.borderDefault,
                     }}
                   >
-                    <div>
-                      <div style={styles.suggestionTime}>
-                        {new Date(s.departureTime).toLocaleString([], {
-                          weekday: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                        {s.isBest && <span style={styles.bestBadge}>BEST</span>}
-                      </div>
-                      <div style={styles.suggestionSub}>{s.summary}</div>
-                    </div>
-                    <div style={styles.suggestionRight}>
-                      <div
+                    <div style={styles.suggestionHeader}>
+                      <span style={styles.suggestionTime}>
+                        {new Date(suggestion.departureTime).toLocaleTimeString(
+                          [],
+                          { hour: "2-digit", minute: "2-digit" },
+                        )}
+                      </span>
+                      {suggestion.isBest && (
+                        <span style={styles.bestBadge}>BEST</span>
+                      )}
+                      <span
                         style={{
-                          color: riskColor(s.overallRisk),
-                          fontSize: "0.75rem",
-                          fontWeight: "700",
+                          ...styles.suggestionRisk,
+                          color:
+                            suggestion.overallRisk === "high"
+                              ? theme.accentRed
+                              : suggestion.overallRisk === "medium"
+                                ? theme.accentOrange
+                                : theme.accentGreen,
                         }}
                       >
-                        {s.overallRisk.toUpperCase()}
-                      </div>
-                      <div style={styles.suggestionDuration}>
-                        {Math.round(s.totalDurationMin / 60)}h{" "}
-                        {Math.round(s.totalDurationMin % 60)}m
-                      </div>
+                        {suggestion.overallRisk?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={styles.suggestionDetails}>
+                      <span>
+                        ⏱️ {Math.round(suggestion.totalDurationMin)} min
+                      </span>
+                      <span>
+                        📊 Risk Score: {suggestion.avgRiskScore?.toFixed(0)}/100
+                      </span>
+                    </div>
+                    <div style={styles.suggestionSummary}>
+                      {suggestion.summary}
                     </div>
                   </div>
                 ))}
-            </div>
-          )}
-        </div>
-
-        {/* Right Panel: Map & Results */}
-        <div style={styles.resultsPanel}>
-          {isCalculating && (
-            <>
-              <h2 style={styles.panelTitle}>Calculating route weather...</h2>
-              <RouteLoadingSkeleton />
-            </>
-          )}
-
-          {!isCalculating && trip && (
-            <>
-              {/* Map */}
-              <div style={styles.mapSection}>
-                <MapView
-                  routePolyline={trip.routePolyline}
-                  waypoints={trip.waypoints} // 30km summary
-                  detailedWaypoints={trip.detailedWaypoints} // 5km details
-                  origin={originFromTrip}
-                  destination={destinationFromTrip}
-                  vehicleType={selectedVehicle}
-                />
               </div>
+            )}
 
-              {/* Summary */}
-              <div style={styles.summaryRow}>
-                <span style={styles.summaryItem}>
-                  📏 {trip.totalDistanceKm.toFixed(0)} km
-                </span>
-                <span style={styles.summaryItem}>
-                  ⏱ {Math.round(trip.totalDurationMin)} min
-                </span>
-                <span
-                  style={{
-                    ...styles.summaryItem,
-                    color: riskColor(trip.overallRiskLevel),
-                  }}
-                >
-                  Risk: {trip.overallRiskLevel.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Waypoint Cards */}
-              <div style={styles.cardsContainer}>
-                {trip.waypoints.map((wp, i) => {
-                  const displayData = getDisplayData(wp);
-                  const enhancedWp = {
-                    ...wp,
-                    maxSafeSpeed: displayData.maxSafeSpeed,
-                    weather: {
-                      ...wp.weather,
-                      riskLevel: displayData.riskLevel,
-                    },
-                  };
-                  const prevDistance =
-                    i > 0 ? trip.waypoints[i - 1].distanceFromStart : 0;
-                  const segmentInfo = {
-                    from: Math.round(prevDistance),
-                    to: Math.round(wp.distanceFromStart),
-                  };
-                  return (
-                    <WaypointCard
-                      key={i}
-                      waypoint={enhancedWp}
-                      index={i}
-                      isFirst={i === 0}
-                      isLast={i === trip.waypoints.length - 1}
-                      segmentInfo={segmentInfo}
-                      vehicleType={selectedVehicle}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Nearby Stops */}
-              {nearbyAds.length > 0 && (
-                <div style={styles.adsSection}>
-                  <h3 style={styles.adsTitle}>📍 Nearby Stops</h3>
-                  <div style={styles.adsList}>
-                    {nearbyAds.map((ad) => (
-                      <div key={ad.id} style={styles.adCard}>
-                        <span style={styles.adIcon}>{adIcon(ad.type)}</span>
-                        <div style={{ flex: 1 }}>
-                          <div style={styles.adName}>{ad.name}</div>
-                          <div style={styles.adOffer}>{ad.offerText}</div>
-                        </div>
-                        <span style={styles.adDistance}>
-                          {ad.distanceKm} km
-                        </span>
-                      </div>
-                    ))}
+            {/* Nearby Ads Section */}
+            {nearbyAds.length > 0 && (
+              <div style={styles.adsSection}>
+                <h3 style={styles.sectionTitle}>🛣️ Nearby Stops</h3>
+                {nearbyAds.map((ad, i) => (
+                  <div key={i} style={styles.adCard}>
+                    <div style={styles.adName}>{ad.name}</div>
+                    <div style={styles.adType}>{ad.type}</div>
+                    <div style={styles.adDistance}>
+                      {ad.distanceKm?.toFixed(1)} km from destination
+                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-// ================================================================
-// Styles
-// ================================================================
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#0a0e14",
-    padding: "24px",
+    background: theme.bgPrimary,
     fontFamily: "system-ui, sans-serif",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    padding: "16px 24px",
+    borderBottom: `1px solid ${theme.borderDefault}`,
+  },
+  logo: { display: "flex", alignItems: "center", gap: "10px" },
+  logoIcon: { fontSize: "20px", color: theme.accentBlue },
+  logoText: { fontSize: "18px", fontWeight: "700", color: theme.textPrimary },
+  logoSubtext: { fontSize: "12px", color: theme.textMuted, marginLeft: "4px" },
+  backBtn: {
+    padding: "6px 14px",
+    background: "transparent",
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "8px",
+    color: theme.textSecondary,
+    fontSize: "13px",
+    cursor: "pointer",
+  },
+  content: { maxWidth: "900px", margin: "0 auto", padding: "24px" },
+  inputSection: {
+    background: theme.bgSecondary,
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "12px",
+    padding: "20px",
     marginBottom: "24px",
   },
-  logo: {
-    color: "#d4ff00",
-    fontWeight: "700",
-    fontSize: "1.1rem",
-    letterSpacing: "1px",
-    cursor: "pointer",
-  },
-  status: { color: "#00e5cc", fontSize: "0.8rem" },
-  grid: { display: "grid", gridTemplateColumns: "380px 1fr", gap: "24px" },
-  panel: {
-    background: "#11151c",
-    borderRadius: "14px",
-    padding: "24px",
-    border: "1px solid rgba(212,255,0,0.1)",
-  },
-  resultsPanel: {
-    background: "#11151c",
-    borderRadius: "14px",
-    padding: "24px",
-    border: "1px solid rgba(212,255,0,0.1)",
-    maxHeight: "80vh",
-    overflowY: "auto",
-  },
-  panelTitle: { color: "#fff", fontSize: "1.1rem", marginBottom: "20px" },
-  form: { display: "flex", flexDirection: "column", gap: "14px" },
+  optionsRow: { display: "flex", gap: "16px", marginBottom: "16px" },
+  field: { flex: 1 },
   label: {
-    color: "#8a93a3",
-    fontSize: "0.75rem",
-    marginTop: "8px",
-    textTransform: "uppercase",
+    display: "block",
+    fontSize: "12px",
+    color: theme.textMuted,
+    marginBottom: "6px",
   },
-  vehicleRow: { display: "flex", gap: "8px" },
-  vehicleOption: {
-    flex: 1,
-    textAlign: "center",
-    padding: "10px",
+  select: {
+    width: "100%",
+    padding: "10px 12px",
+    background: theme.bgPrimary,
+    border: `1px solid ${theme.borderDefault}`,
     borderRadius: "8px",
-    border: "1px solid #2a2f3a",
-    color: "#8a93a3",
-    fontSize: "0.8rem",
-    cursor: "pointer",
-    transition: "all 0.2s",
+    color: theme.textPrimary,
+    fontSize: "14px",
   },
-  vehicleOptionActive: {
-    border: "1px solid #d4ff00",
-    color: "#d4ff00",
-    boxShadow: "0 0 8px rgba(212,255,0,0.3)",
-  },
-  button: {
-    marginTop: "10px",
-    background: "#d4ff00",
-    color: "#0a0e14",
+  buttonRow: { display: "flex", gap: "12px", flexWrap: "wrap" },
+  planBtn: {
+    flex: 1,
+    padding: "12px 20px",
+    background: theme.accentBlue,
+    color: "#fff",
     border: "none",
     borderRadius: "10px",
-    padding: "14px",
-    fontWeight: "700",
-    fontSize: "0.95rem",
-    cursor: "pointer",
-  },
-  smartDepartureBtn: {
-    marginTop: "16px",
-    background: "transparent",
-    border: "1px solid #00e5cc",
-    color: "#00e5cc",
-    borderRadius: "8px",
-    padding: "10px",
-    width: "100%",
-    cursor: "pointer",
-    fontSize: "0.9rem",
+    fontSize: "14px",
     fontWeight: "600",
-  },
-  newTripBtn: {
-    marginTop: "12px",
-    background: "transparent",
-    border: "1px solid #d4ff00",
-    color: "#d4ff00",
-    borderRadius: "8px",
-    padding: "10px",
-    width: "100%",
     cursor: "pointer",
-    fontSize: "0.9rem",
   },
-  error: { color: "#ff4d4d", fontSize: "0.8rem", marginTop: "8px" },
-  mapSection: { marginBottom: "16px" },
-  summaryRow: {
-    display: "flex",
-    gap: "16px",
-    marginBottom: "16px",
-    paddingBottom: "16px",
-    borderBottom: "1px solid #2a2f3a",
+  smartBtn: {
+    flex: 1,
+    padding: "12px 20px",
+    background: "transparent",
+    border: `1px solid ${theme.accentBlue}`,
+    borderRadius: "10px",
+    color: theme.accentBlue,
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
   },
-  summaryItem: { color: "#fff", fontSize: "0.85rem" },
-  cardsContainer: { display: "flex", flexDirection: "column", gap: "8px" },
-
-  smartDeparturePanel: {
-    marginTop: "16px",
-    background: "#0d1119",
-    border: "1px solid rgba(0,229,204,0.25)",
+  newBtn: {
+    padding: "12px 20px",
+    background: "transparent",
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "10px",
+    color: theme.textSecondary,
+    fontSize: "14px",
+    cursor: "pointer",
+  },
+  // 🆕 NEW: Alternate Route Banner
+  alternateBanner: {
+    background:
+      "linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 100%)",
+    border: `2px solid ${theme.accentOrange}`,
     borderRadius: "12px",
     padding: "16px",
+    marginBottom: "24px",
   },
-  smartDepartureHeader: {
+  alternateBannerContent: {
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
+    gap: "16px",
   },
-  smartDepartureTitle: {
-    color: "#00e5cc",
-    fontSize: "0.9rem",
+  alternateBannerIcon: {
+    fontSize: "32px",
+  },
+  alternateBannerText: {
+    flex: 1,
+  },
+  alternateBannerTitle: {
+    fontSize: "16px",
     fontWeight: "700",
+    color: theme.accentOrange,
+    marginBottom: "12px",
   },
-  smartDepartureClose: {
-    color: "#8a93a3",
-    cursor: "pointer",
-    fontSize: "0.9rem",
-  },
-  smartDepartureSub: {
-    color: "#8a93a3",
-    fontSize: "0.75rem",
-    margin: "4px 0 12px",
-  },
-  suggestionRow: {
+  alternateBannerComparison: {
     display: "flex",
-    justifyContent: "space-between",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  comparisonItem: {
+    display: "flex",
     alignItems: "center",
-    padding: "10px",
+    gap: "12px",
+    fontSize: "13px",
+  },
+  comparisonLabel: {
+    color: theme.textMuted,
+    fontWeight: "600",
+    minWidth: "120px",
+  },
+  comparisonValue: {
+    color: theme.textPrimary,
+    fontWeight: "500",
+  },
+  comparisonRisk: {
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    marginLeft: "auto",
+  },
+  acceptAlternateBtn: {
+    padding: "10px 20px",
+    background: theme.accentGreen,
+    color: "#fff",
+    border: "none",
     borderRadius: "8px",
-    marginBottom: "6px",
-    border: "1px solid #2a2f3a",
+    fontSize: "14px",
+    fontWeight: "700",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
   },
-  suggestionRowBest: {
-    border: "1px solid #00e5cc",
-    background: "rgba(0,229,204,0.06)",
+  warningsBox: {
+    background: "rgba(245,158,11,0.08)",
+    border: `1px solid ${theme.accentOrange}`,
+    borderRadius: "10px",
+    padding: "14px",
+    marginBottom: "20px",
   },
-  suggestionTime: { color: "#fff", fontSize: "0.8rem", fontWeight: "600" },
-  suggestionSub: { color: "#8a93a3", fontSize: "0.7rem", marginTop: "2px" },
-  suggestionRight: { textAlign: "right" },
-  suggestionDuration: {
-    color: "#8a93a3",
-    fontSize: "0.7rem",
-    marginTop: "2px",
+  warningsTitle: {
+    fontSize: "14px",
+    fontWeight: "700",
+    color: theme.accentOrange,
+    marginBottom: "10px",
   },
-  bestBadge: {
-    marginLeft: "8px",
-    background: "#00e5cc",
-    color: "#0a0e14",
-    fontSize: "0.6rem",
-    fontWeight: "800",
-    padding: "2px 6px",
-    borderRadius: "4px",
-  },
-
-  adsSection: {
-    marginTop: "20px",
-    paddingTop: "16px",
-    borderTop: "1px solid #2a2f3a",
-  },
-  adsTitle: { color: "#fff", fontSize: "0.95rem", marginBottom: "10px" },
-  adsList: { display: "flex", flexDirection: "column", gap: "8px" },
-  adCard: {
+  warningItem: {
     display: "flex",
     alignItems: "center",
     gap: "10px",
-    padding: "10px",
-    background: "#161b24",
-    borderRadius: "8px",
-    border: "1px solid #2a2f3a",
+    padding: "6px 0",
   },
-  adIcon: { fontSize: "1.1rem" },
-  adName: { color: "#fff", fontSize: "0.8rem", fontWeight: "600" },
-  adOffer: { color: "#8a93a3", fontSize: "0.7rem", marginTop: "2px" },
-  adDistance: { color: "#d4ff00", fontSize: "0.75rem", fontWeight: "700" },
+  warningIcon: {
+    fontSize: "16px",
+  },
+  warningText: {
+    fontSize: "13px",
+    color: theme.textPrimary,
+  },
+  summaryBox: {
+    display: "flex",
+    gap: "20px",
+    background: theme.bgSecondary,
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "10px",
+    padding: "14px 18px",
+    marginBottom: "24px",
+  },
+  summaryItem: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  summaryLabel: {
+    fontSize: "11px",
+    color: theme.textMuted,
+    textTransform: "uppercase",
+  },
+  summaryValue: {
+    fontSize: "16px",
+    fontWeight: "700",
+    color: theme.textPrimary,
+  },
+  waypointsSection: {
+    marginBottom: "32px",
+  },
+  sectionTitle: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: theme.textPrimary,
+    marginBottom: "16px",
+  },
+  smartDepartureSection: {
+    marginBottom: "32px",
+  },
+  suggestionCard: {
+    background: theme.bgSecondary,
+    border: `2px solid ${theme.borderDefault}`,
+    borderRadius: "10px",
+    padding: "14px",
+    marginBottom: "10px",
+  },
+  suggestionHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "8px",
+  },
+  suggestionTime: {
+    fontSize: "16px",
+    fontWeight: "700",
+    color: theme.textPrimary,
+  },
+  bestBadge: {
+    padding: "2px 8px",
+    background: theme.accentGreen,
+    color: "#fff",
+    borderRadius: "4px",
+    fontSize: "10px",
+    fontWeight: "700",
+  },
+  suggestionRisk: {
+    fontSize: "11px",
+    fontWeight: "700",
+    marginLeft: "auto",
+  },
+  suggestionDetails: {
+    display: "flex",
+    gap: "16px",
+    fontSize: "12px",
+    color: theme.textSecondary,
+    marginBottom: "6px",
+  },
+  suggestionSummary: {
+    fontSize: "13px",
+    color: theme.textMuted,
+    lineHeight: "1.4",
+  },
+  adsSection: {
+    marginBottom: "32px",
+  },
+  adCard: {
+    background: theme.bgSecondary,
+    border: `1px solid ${theme.borderDefault}`,
+    borderRadius: "8px",
+    padding: "12px",
+    marginBottom: "8px",
+  },
+  adName: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: theme.textPrimary,
+    marginBottom: "4px",
+  },
+  adType: {
+    fontSize: "12px",
+    color: theme.textMuted,
+    marginBottom: "4px",
+  },
+  adDistance: {
+    fontSize: "11px",
+    color: theme.accentBlue,
+  },
 };
 
-export default TripPlannerPage;
+export default PlanTripPage;

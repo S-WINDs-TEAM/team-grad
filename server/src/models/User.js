@@ -72,6 +72,20 @@ const userSchema = new mongoose.Schema(
       lastIP: { type: String, default: null },
       countryCode: { type: String, default: null },
     },
+    workStatus: {
+      type: String,
+      enum: ["available", "resting", "on_break", "on_leave", "deactivated"],
+      default: "available",
+    },
+    mobile: { type: String, default: null },
+    nationalId: { type: String, default: null },
+    dateOfBirth: { type: Date, default: null },
+    currentBreak: {
+      startedAt: { type: Date, default: null },
+      requestedMin: { type: Number, default: null },
+      status: { type: String, default: null }, // 'active' | 'completed' | 'overrun'
+    },
+    breakOverruns: { type: Number, default: 0 },
   },
   { timestamps: true },
 );
