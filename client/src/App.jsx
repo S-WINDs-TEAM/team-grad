@@ -3,19 +3,19 @@ import LoginPage from "./pages/LoginPage";
 // import Register from "./pages/Register";
 // import TestDashboard from "./pages/TestDashboard";
 import HomePage from "./pages/HomePage";
-import PlanTripPage from "./pages/PlanTripPage";
 import LandingPage from "./pages/LandingPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
-import FleetDashboardPage from "./pages/FleetDashboard/FleetDashboardPage";
 import DriverTrackingPage from "./pages/DriverTrackingPage";
 // import RouteResultsPage from './pages/RouteResultsPage';
-import TripHistoryPage from "./pages/TripHistoryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
+import FleetDashboardPage from "./pages/FleetDashboard/FleetDashboardPage";
+// import FleetDashboardPage from "./pages/FleetDashboardPage";
 import FleetAnalyticsPage from "./pages/FleetDashboard/FleetAnalyticsPage";
 import FleetDashboardLayout from "./pages/FleetDashboard/FleetDashboardLayout";
+import TripHistoryPage from "./pages/FleetDashboard/TripHistoryPage";
+import PlanTripPage from "./pages/FleetDashboard/PlanTripPage";
 import FleetOverviewPage from "./pages/FleetDashboard/FleetOverviewPage";
-import FleetTripHistoryPage from "./pages/FleetDashboard/FleetTripHistoryPage";
 import FleetRouteComparisonPage from "./pages/FleetDashboard/FleetRouteComparisonPage";
 import FleetVehicleListPage from "./pages/FleetDashboard/FleetVehicleListPage";
 import FleetSettingsPage from "./pages/FleetDashboard/FleetSettingsPage";
@@ -48,7 +48,8 @@ function App() {
         >
           <Route index element={<FleetDashboardPage />} />
           <Route path="overview" element={<FleetOverviewPage />} />
-          <Route path="trip-history" element={<FleetTripHistoryPage />} />
+          <Route path="trip-history" element={<TripHistoryPage />} />
+          <Route path="plan" element={<PlanTripPage />} />
           <Route
             path="route-comparison"
             element={<FleetRouteComparisonPage />}
@@ -71,22 +72,6 @@ function App() {
           element={
             <ProtectedRoute>
               <HomePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            <ProtectedRoute>
-              <TripHistoryPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/plan"
-          element={
-            <ProtectedRoute>
-              <PlanTripPage />
             </ProtectedRoute>
           }
         />

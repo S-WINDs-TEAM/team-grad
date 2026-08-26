@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import useAuth from "../hooks/useAuth";
-import { getHistoryApi } from "../api/routeApi";
-import { getRiskPathColor } from "../utils/riskColors";
-import { theme } from "../styles/theme";
+import useAuth from "../../hooks/useAuth";
+import { getHistoryApi } from "../../api/routeApi";
+import { getRiskPathColor } from "../../utils/riskColors";
+import { theme } from "../../styles/theme";
 
 const TripHistoryPage = () => {
   const navigate = useNavigate();

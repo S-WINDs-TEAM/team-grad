@@ -20,6 +20,11 @@ const menuItems = [
     to: "/fleet/trip-history",
   },
   {
+    title: "Plan Trip",
+    icon: "travel_explore",
+    to: "/fleet/plan",
+  },
+  {
     title: "Route Comparison",
     icon: "compare_arrows",
     to: "/fleet/route-comparison",

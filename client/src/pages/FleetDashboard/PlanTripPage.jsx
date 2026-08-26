@@ -2,19 +2,19 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-import useAuth from "../hooks/useAuth";
-import { setCurrentTrip } from "../store/tripSlice";
+import useAuth from "../../hooks/useAuth";
+import { setCurrentTrip } from "../../store/tripSlice";
 import {
   planRouteApi,
   getTripByIdApi,
   smartDepartureApi,
-} from "../api/routeApi";
-import { getAdsRecommendationsApi } from "../api/adsApi";
-import LocationAutocomplete from "../components/LocationAutocomplete";
-import MapView from "../components/MapView";
-import WaypointCard from "../components/WaypointCard";
-import RouteLoadingSkeleton from "../components/routeLoadingSkeleton";
-import { theme } from "../styles/theme";
+} from "../../api/routeApi";
+import { getAdsRecommendationsApi } from "../../api/adsApi";
+import LocationAutocomplete from "../../components/LocationAutocomplete";
+import MapView from "../../components/MapView";
+import WaypointCard from "../../components/WaypointCard";
+import RouteLoadingSkeleton from "../../components/routeLoadingSkeleton";
+import { theme } from "../../styles/theme";
 
 const PlanTripPage = () => {
   const navigate = useNavigate();
